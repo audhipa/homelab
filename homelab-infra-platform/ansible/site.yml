@@ -1,0 +1,21 @@
+---
+# Main Ansible playbook.
+# This is a safe skeleton: it uses debug tasks only and does not change systems.
+
+- name: Configure monitoring hosts
+  hosts: monitoring
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Show placeholder monitoring message
+      ansible.builtin.debug:
+        msg: "Placeholder: add Docker host setup and monitoring deployment tasks here."
+
+- name: Configure exporter hosts
+  hosts: exporters
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Show placeholder exporter message
+      ansible.builtin.debug:
+        msg: "Placeholder: add exporter installation and configuration tasks here."
