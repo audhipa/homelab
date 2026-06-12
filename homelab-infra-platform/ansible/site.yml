@@ -1,21 +1,59 @@
 ---
-# Main Ansible playbook.
-# This is a safe skeleton: it uses debug tasks only and does not change systems.
+- name: Configure Ubuntu homelab server
+  hosts: homelab
+  become: true
 
-- name: Configure monitoring hosts
-  hosts: monitoring
-  become: false
-  gather_facts: false
   tasks:
-    - name: Show placeholder monitoring message
-      ansible.builtin.debug:
-        msg: "Placeholder: add Docker host setup and monitoring deployment tasks here."
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
 
-- name: Configure exporter hosts
-  hosts: exporters
-  become: false
-  gather_facts: false
-  tasks:
-    - name: Show placeholder exporter message
-      ansible.builtin.debug:
-        msg: "Placeholder: add exporter installation and configuration tasks here."
+    - name: Install baseline packages
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - wget
+          - htop
+          - ufw
+          - ca-certificates
+          - gnupg
+          - python3
+          - python3-pip
+        state: present
+
+    - name: Ensure homelab directory exists
+      ansible.builtin.file:
+        path: /opt/homelab
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Set default policy to deny incoming traffic
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Set default policy to allow outgoing traffic
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Allow SSH through firewall
+      community.general.ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: Allow HTTP reverse proxy traffic from Tailscale
+      community.general.ufw:
+        rule: allow
+        interface: tailscale0
+        direction: in
+        port: "80"
+        proto: tcp
+
+    - name: Enable firewall
+      community.general.ufw:
+        state: enabled
