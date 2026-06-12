@@ -1,45 +1,72 @@
 # Network Map
 
-Use this file to document the network topology of your homelab. Keep examples generic and avoid committing personal or sensitive network details.
+Use this file to document the network topology of the homelab without committing private addresses, secrets, or personal network details.
 
-## Network Segments
+## Access Path
 
-| Segment | Purpose | Example CIDR | Notes |
-| --- | --- | --- | --- |
-| Management | SSH, admin access, Ansible | `192.0.2.0/24` | Replace locally only |
-| Services | Docker-hosted services | `198.51.100.0/24` | Replace locally only |
-| Lab | Experiments and test nodes | `203.0.113.0/24` | Replace locally only |
+| Path | Purpose | Notes |
+| --- | --- | --- |
+| Personal laptop -> Tailscale -> OptiPlex | SSH and browser access | Preferred private management path |
+| Personal laptop -> SSH -> OptiPlex | Git, Ansible, Docker operations | Uses local inventory values that are not committed |
+| Browser -> Caddy hostnames | Dashboard access | Preferred over direct backend ports |
 
-The example CIDR ranges are documentation-only placeholders.
+## Host Inventory
 
-## Host Inventory Template
+| Host | Role | Address |
+| --- | --- | --- |
+| Dell OptiPlex | Ubuntu Docker host | Use local Tailscale or DNS value outside Git |
+| Personal laptop | Operator workstation | Use local Tailscale or DNS value outside Git |
 
-| Hostname | Role | Address | Notes |
-| --- | --- | --- | --- |
-| `lab-node-01` | Docker host | `example.local` | Runs monitoring stack |
-| `lab-node-02` | Exporter target | `example.local` | Exposes metrics |
-| `mgmt-node` | Control node | `example.local` | Runs Ansible commands |
+## Reverse Proxy Hostnames
+
+| Hostname | Routed Service | Backend Port | Purpose |
+| --- | --- | ---: | --- |
+| `grafana.ozul` | Grafana | 3000 | Metrics dashboards |
+| `kuma.ozul` | Uptime Kuma | 3001 | Service availability dashboard |
+| `prometheus.ozul` | Prometheus | 9090 | Metrics query and target status |
 
 ## Service Ports
 
-| Service | Default Port | Purpose |
-| --- | ---: | --- |
-| uptime-kuma | 3001 | Availability checks |
-| Prometheus | 9090 | Metrics collection |
-| Grafana | 3000 | Dashboards |
-| Node Exporter | 9100 | Host metrics |
+| Port | Service | Exposure Notes |
+| ---: | --- | --- |
+| 80 | Caddy reverse proxy | Preferred browser entry point over Tailscale |
+| 3000 | Grafana backend | May exist for local testing; prefer Caddy hostname |
+| 3001 | Uptime Kuma backend | May exist for local testing; prefer Caddy hostname |
+| 9090 | Prometheus backend | May exist for local testing; prefer Caddy hostname |
+| 9100 | Node Exporter metrics | Should not be broadly exposed |
 
-## Diagram Placeholder
+## Notes
+
+- The OptiPlex is the Ubuntu Docker host for the monitoring stack.
+- Tailscale is the intended remote access path for SSH and browser traffic.
+- Caddy provides friendly internal hostnames for dashboards.
+- Direct dashboard ports are useful for local testing, but normal access should go through Caddy.
+- Node Exporter exposes host metrics and should remain limited to trusted lab access.
+
+## Diagram
 
 ```text
-[Management Node]
+Personal Laptop
        |
-       | Ansible / SSH
+       | Tailscale / SSH / Browser
        v
-[Docker Host] ----> [Prometheus] ----> [Grafana]
-       |                 |
-       |                 v
-       +----------> [Node Exporter]
+Ubuntu OptiPlex
        |
-       +----------> [uptime-kuma]
+       | Docker Compose
+       v
+Caddy :80
+       |
+       +--> grafana.ozul -> Grafana :3000
+       +--> kuma.ozul -> Uptime Kuma :3001
+       +--> prometheus.ozul -> Prometheus :9090
+
+Prometheus :9090
+       |
+       +--> Node Exporter :9100
 ```
+
+## Screenshot Placeholders
+
+[Screenshot here: Tailscale machines page showing laptop and OptiPlex connected]
+
+[Screenshot here: browser successfully loading http://grafana.ozul over Tailscale]

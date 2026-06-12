@@ -1,56 +1,129 @@
 # Homelab Infrastructure Platform
 
-Welcome to the **Homelab Infrastructure Platform**—a low-cost DevOps/AI infrastructure portfolio project. This repository is designed to showcase your ability to assemble and operate a small-scale platform using common automation tools. None of the code here should expose secrets or private resources; instead, it provides a safe starting point for building out your homelab.
+A low-cost infrastructure automation homelab built on an Ubuntu Dell OptiPlex. The project is designed to show practical DevOps and cloud-infrastructure skills with a small, reproducible platform: Docker Compose services, Ansible host configuration, monitoring, reverse proxy routing, scripts, documentation, and CI validation.
 
-## Objective
+This repository is public-safe by design. Real secrets, passwords, tokens, private keys, and local-only inventory values should stay out of version control.
 
-The goal of this project is to set up a reproducible environment where you can experiment with monitoring, alerting, and deployment workflows using inexpensive hardware. You'll use familiar tools like Ansible, Docker Compose, Terraform, and GitHub Actions to orchestrate a collection of services. The emphasis is on **learning** and **demonstrating** skills rather than on production-ready scalability.
+## Project Objective
 
-## Suggested Hardware
+The goal is to build a resume-ready homelab that demonstrates operational habits, not just tool installation. The current focus is:
 
-While you can adapt these instructions to your own devices, a typical setup might include:
+- Running a small monitoring stack on inexpensive hardware.
+- Managing host baseline configuration with Ansible.
+- Exposing internal services through a simple Caddy reverse proxy.
+- Validating changes with safe local commands and GitHub Actions.
+- Documenting what is complete separately from what is planned.
 
-- **Mini PC or retired desktop** for running Docker services and automation.
-- **Old laptop or small server** acting as a central management node for Ansible and Terraform.
-- **Home router/switch** for basic network segmentation and DHCP reservations.
+## Current Completed Milestone
 
-Your hardware choices are flexible; the key is to keep costs low while ensuring the system stays responsive.
+The current milestone is a working monitoring and reverse-proxy stack on the Ubuntu OptiPlex.
 
-## Architecture Overview
+Completed:
 
-This homelab uses a modular architecture:
+- Docker Compose monitoring stack is running.
+- Services include Grafana, Uptime Kuma, Prometheus, Node Exporter, and Caddy.
+- Caddy routes friendly internal hostnames:
+  - `http://grafana.ozul`
+  - `http://kuma.ozul`
+  - `http://prometheus.ozul`
+- Prometheus scrape targets are configured for:
+  - `prometheus`
+  - `node-exporter`
+- Ansible baseline playbook configures core packages, `/opt/homelab`, and UFW rules.
+- Firewall baseline allows SSH and Caddy HTTP traffic through `tailscale0`.
+- Repo hygiene and validation workflow are committed.
 
-1. **Networking** - A documented home-lab network with management notes in `docs/network-map.md`.
-2. **Provisioning** - Ansible inventories and playbooks under `ansible/` to configure hosts and deploy services.
-3. **Containers** - `docker/compose.yml` defines a monitoring stack with uptime-kuma, Prometheus, Grafana, and Node Exporter.
-4. **Infrastructure as Code** - `terraform/` is reserved for future cloud, VM, or network infrastructure definitions.
-5. **Automation** - Shell scripts in `scripts/` support health checks, deployment, and backups.
-6. **Validation** - GitHub Actions in `.github/workflows/validate.yml` checks YAML, shell scripts, and Docker Compose syntax.
+Planned, not yet claimed as complete:
 
-## Roadmap
+- Grafana dashboard provisioning.
+- Alerting rules and notification routing.
+- Backup restore testing.
+- Terraform resources for real cloud, VM, or network infrastructure.
 
-1. Document the current hardware, network, and constraints.
-2. Copy `ansible/inventory.example.ini` to a private `inventory.ini` and add real hosts locally.
-3. Expand `ansible/site.yml` from placeholder tasks into safe host configuration.
-4. Customize `docker/compose.yml` for the monitoring stack.
-5. Add Prometheus scrape configuration and Grafana dashboards.
-6. Add Terraform only when there is an actual cloud, VM, or network resource to manage.
-7. Keep every change small, reviewable, and validated by CI.
+## Architecture Summary
 
-## Validation
+The homelab is accessed from a personal laptop over Tailscale and SSH. The OptiPlex runs Ubuntu and hosts the monitoring stack with Docker Compose. Caddy listens on port `80` and reverse proxies friendly internal hostnames to backend containers. Prometheus scrapes metrics from itself and Node Exporter. Grafana uses Prometheus metrics for dashboards, and Uptime Kuma monitors service availability.
 
-The GitHub Actions workflow validates the repository without requiring secrets. It checks:
+See [docs/architecture.md](docs/architecture.md) and [docs/network-map.md](docs/network-map.md) for more detail.
 
-- YAML syntax using `yamllint`.
-- Shell scripts using `shellcheck`.
-- Docker Compose syntax using `docker compose config`.
+## Tools Used
 
-Local equivalents can be run before opening a pull request.
+- Ubuntu on Dell OptiPlex
+- Tailscale for private remote access
+- SSH for administration
+- Docker Compose for service orchestration
+- Caddy for reverse proxy routing
+- Prometheus for metrics collection
+- Node Exporter for host metrics
+- Grafana for dashboards
+- Uptime Kuma for uptime checks
+- Ansible for baseline host automation
+- GitHub Actions for repository validation
+- Shell scripts for health checks, deployment, and backup workflows
+
+## How To Run The Stack
+
+From the repository root:
+
+```bash
+docker compose -f docker/compose.yml up -d
+```
+
+Check service state:
+
+```bash
+docker compose -f docker/compose.yml ps
+```
+
+Stop the stack:
+
+```bash
+docker compose -f docker/compose.yml down
+```
+
+## How To Validate The Stack
+
+Validate Docker Compose syntax:
+
+```bash
+docker compose -f docker/compose.yml config
+```
+
+Validate Caddy routes locally:
+
+```bash
+curl -I -H "Host: grafana.ozul" http://localhost
+curl -I -H "Host: kuma.ozul" http://localhost
+curl -H "Host: prometheus.ozul" http://localhost
+```
+
+Validate Node Exporter metrics:
+
+```bash
+curl http://localhost:9100/metrics | head
+```
+
+Validate Ansible connectivity and check-mode:
+
+```bash
+ansible -i ansible/inventory.ini homelab -m ping
+ansible-playbook -i ansible/inventory.ini ansible/site.yml --check
+```
+
+## Screenshot Placeholders
+
+[Screenshot here: Docker Compose services running with Grafana, Prometheus, Uptime Kuma, Node Exporter, and Caddy healthy]
+
+[Screenshot here: Prometheus targets page showing prometheus and node-exporter as UP]
+
+[Screenshot here: Grafana dashboard showing host CPU, memory, disk, or uptime metrics]
+
+[Screenshot here: Uptime Kuma dashboard showing monitored homelab services]
 
 ## Resume Value
 
-This project demonstrates practical experience with infrastructure documentation, Ansible, Docker Compose, monitoring, backup scripting, and CI validation. A strong resume bullet after implementation could be:
+This project demonstrates practical experience with Linux administration, Docker Compose, monitoring, reverse proxy configuration, Ansible automation, firewall-aware service exposure, operational runbooks, troubleshooting documentation, and CI-backed repo hygiene.
 
-> Built a low-cost homelab infrastructure platform using Ansible, Docker Compose, Prometheus, Grafana, uptime-kuma, shell automation, and GitHub Actions to demonstrate repeatable DevOps operations and monitoring workflows.
+Example resume bullet:
 
-Keep real passwords, tokens, private IPs, and personal information out of version control.
+> Built and documented a low-cost Ubuntu homelab platform using Docker Compose, Caddy, Prometheus, Grafana, Uptime Kuma, Node Exporter, Ansible, and GitHub Actions to demonstrate repeatable infrastructure operations and monitoring workflows.
