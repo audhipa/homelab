@@ -1,0 +1,40 @@
+# Local Ansible inventory and secrets
+homelab-infra-platform/ansible/inventory.ini
+homelab-infra-platform/ansible/*.local.ini
+homelab-infra-platform/ansible/.vault_pass*
+homelab-infra-platform/ansible/vault-password*
+homelab-infra-platform/ansible/vault_pass*
+
+# Local Docker environment and generated state
+homelab-infra-platform/docker/.env
+homelab-infra-platform/docker/.env.*
+!homelab-infra-platform/docker/.env.example
+homelab-infra-platform/docker/volumes/
+homelab-infra-platform/docker/data/
+homelab-infra-platform/docker/state/
+
+# Backups and runtime output
+homelab-infra-platform/backups/
+homelab-infra-platform/backup/
+homelab-infra-platform/**/*.bak
+homelab-infra-platform/**/*.backup
+homelab-infra-platform/**/*.tmp
+homelab-infra-platform/**/*.log
+
+# Private keys and credentials
+homelab-infra-platform/**/*.pem
+homelab-infra-platform/**/*.key
+homelab-infra-platform/**/*.crt
+homelab-infra-platform/**/*.p12
+homelab-infra-platform/**/*.pfx
+homelab-infra-platform/**/id_rsa*
+homelab-infra-platform/**/id_ed25519*
+homelab-infra-platform/**/known_hosts
+
+# Local generated state and tool caches
+homelab-infra-platform/.ansible/
+homelab-infra-platform/.cache/
+homelab-infra-platform/.pytest_cache/
+homelab-infra-platform/.terraform/
+homelab-infra-platform/**/*.tfstate
+homelab-infra-platform/**/*.tfstate.*
