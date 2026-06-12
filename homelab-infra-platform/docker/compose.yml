@@ -19,6 +19,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
 
   grafana:
@@ -45,7 +46,24 @@ services:
     volumes:
       - "/:/host:ro,rslave"
 
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - grafana
+      - uptime-kuma
+      - prometheus
+
 volumes:
   uptime-kuma-data:
   prometheus-data:
   grafana-data:
+  caddy-data:
+  caddy-config:
