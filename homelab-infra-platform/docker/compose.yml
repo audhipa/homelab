@@ -60,6 +60,12 @@ services:
       - grafana
       - uptime-kuma
       - prometheus
+    networks:
+      default:
+        aliases:
+          - grafana.ozul
+          - kuma.ozul
+          - prometheus.ozul
 
 volumes:
   uptime-kuma-data:
