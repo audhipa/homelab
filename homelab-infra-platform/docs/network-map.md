@@ -65,8 +65,8 @@ Prometheus :9090
        +--> Node Exporter :9100
 ```
 
-## Screenshot Placeholders
+## Screenshots
 
-[Screenshot here: Tailscale machines page showing laptop and OptiPlex connected]
+Tailscale machines view for the remote access path:
 
-[Screenshot here: browser successfully loading http://grafana.ozul over Tailscale]
+![Tailscale machines](screenshots/tailscale-machines.png)

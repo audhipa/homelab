@@ -128,8 +128,12 @@ The backup script creates a timestamped archive from the named Docker volumes li
 - Document failures in `docs/troubleshooting.md`.
 - Avoid committing real `.env`, inventory, SSH keys, or other sensitive files.
 
-## Screenshot Placeholders
+## Screenshots
 
-[Screenshot here: terminal output of docker compose ps showing all services Up]
+Docker Compose service status:
 
-[Screenshot here: Prometheus /targets page showing node-exporter UP]
+![Docker Compose services running](screenshots/docker-compose-ps.jpg)
+
+Prometheus target health:
+
+![Prometheus targets](screenshots/prometheus-targets.jpg)

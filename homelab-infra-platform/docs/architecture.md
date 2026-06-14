@@ -60,9 +60,19 @@ Caddy Reverse Proxy
 - The Ansible baseline allows Caddy HTTP traffic through `tailscale0`, keeping the intended access path narrow.
 - Treat this as a learning lab, not a production security boundary.
 
-## Screenshot Placeholders
+## Screenshots
 
-[Screenshot here: architecture diagram or browser tabs showing grafana.ozul, kuma.ozul, and prometheus.ozul working over Tailscale]
+Prometheus target validation:
+
+![Prometheus targets](screenshots/prometheus-targets.jpg)
+
+Grafana dashboard backed by Prometheus metrics:
+
+![Grafana dashboard](screenshots/grafana-dashboard.png)
+
+Uptime Kuma monitoring view:
+
+![Uptime Kuma dashboard](screenshots/uptime-kuma-dashboard.png)
 
 ## Future Enhancements
 

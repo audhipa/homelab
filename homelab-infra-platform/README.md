@@ -110,15 +110,23 @@ ansible -i ansible/inventory.ini homelab -m ping
 ansible-playbook -i ansible/inventory.ini ansible/site.yml --check
 ```
 
-## Screenshot Placeholders
+## Screenshots
 
-[Screenshot here: Docker Compose services running with Grafana, Prometheus, Uptime Kuma, Node Exporter, and Caddy healthy]
+Docker Compose service status after deployment:
 
-[Screenshot here: Prometheus targets page showing prometheus and node-exporter as UP]
+![Docker Compose services running](docs/screenshots/docker-compose-ps.jpg)
 
-[Screenshot here: Grafana dashboard showing host CPU, memory, disk, or uptime metrics]
+Prometheus targets with the configured scrape jobs up:
 
-[Screenshot here: Uptime Kuma dashboard showing monitored homelab services]
+![Prometheus targets](docs/screenshots/prometheus-targets.jpg)
+
+Grafana metrics dashboard:
+
+![Grafana dashboard](docs/screenshots/grafana-dashboard.png)
+
+Uptime Kuma service monitoring dashboard:
+
+![Uptime Kuma dashboard](docs/screenshots/uptime-kuma-dashboard.png)
 
 ## Resume Value
 
