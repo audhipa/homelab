@@ -28,10 +28,10 @@ jobs:
           sudo apt-get install -y shellcheck
 
       - name: Lint YAML
-        run: yamllint -d relaxed homelab-infra-platform
+        run: yamllint -d relaxed .github ansible docker docs
 
       - name: Lint shell scripts
-        run: find homelab-infra-platform/scripts -type f -name "*.sh" -print0 | xargs -0 shellcheck
+        run: find scripts -type f -name "*.sh" -print0 | xargs -0 shellcheck
 
       - name: Validate Docker Compose syntax
-        run: docker compose -f homelab-infra-platform/docker/compose.yml config
+        run: docker compose -f docker/compose.yml config

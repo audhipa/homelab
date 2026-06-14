@@ -1,0 +1,13 @@
+# Local runtime configuration
+docker/.env
+ansible/inventory.ini
+
+# Generated local data
+backups/
+*.log
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

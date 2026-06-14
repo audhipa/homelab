@@ -64,9 +64,3 @@ Prometheus :9090
        |
        +--> Node Exporter :9100
 ```
-
-## Screenshots
-
-Tailscale machines view for the remote access path:
-
-![Tailscale machines](screenshots/tailscale-machines.png)
