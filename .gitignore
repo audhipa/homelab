@@ -5,6 +5,12 @@ homelab-infra-platform/ansible/.vault_pass*
 homelab-infra-platform/ansible/vault-password*
 homelab-infra-platform/ansible/vault_pass*
 
+# Local agent instructions
+AGENTS.md
+agent.md
+agents.md
+homelab-infra-platform/.gitignore
+
 # Local Docker environment and generated state
 homelab-infra-platform/docker/.env
 homelab-infra-platform/docker/.env.*
@@ -38,3 +44,9 @@ homelab-infra-platform/.pytest_cache/
 homelab-infra-platform/.terraform/
 homelab-infra-platform/**/*.tfstate
 homelab-infra-platform/**/*.tfstate.*
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
