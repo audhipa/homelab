@@ -19,6 +19,22 @@ homelab-infra-platform/docker/volumes/
 homelab-infra-platform/docker/data/
 homelab-infra-platform/docker/state/
 
+# AWS cloud ops local credentials, generated files, and state
+aws-cloud-ops/.aws/
+aws-cloud-ops/.env
+aws-cloud-ops/.env.*
+aws-cloud-ops/**/*.pem
+aws-cloud-ops/**/*.key
+aws-cloud-ops/**/*.crt
+aws-cloud-ops/**/*.p12
+aws-cloud-ops/**/*.pfx
+aws-cloud-ops/.terraform/
+aws-cloud-ops/**/*.tfstate
+aws-cloud-ops/**/*.tfstate.*
+aws-cloud-ops/crash.log
+aws-cloud-ops/crash.*.log
+aws-cloud-ops/.terraform.lock.hcl
+
 # Backups and runtime output
 homelab-infra-platform/backups/
 homelab-infra-platform/backup/
