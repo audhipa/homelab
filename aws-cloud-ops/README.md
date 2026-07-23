@@ -1,76 +1,86 @@
 # AWS Cloud Operations Mini-Platform
 
-A small AWS-first cloud operations lab designed to translate physical homelab infrastructure skills into public cloud operations.
+This is a small AWS operations lab built to translate my Ubuntu, Docker, and monitoring homelab experience into public-cloud work I can explain and troubleshoot.
 
-The goal is to build a cheap, understandable, interview-defensible AWS project that demonstrates account safety, IAM, networking, monitoring, logging, backup/restore thinking, cost controls, and eventually Terraform and CI/CD validation.
+I deployed Phase 1 manually on purpose. Before automating the environment, I wanted to understand the network path, host access, instance role, container runtime, log collection, storage controls, and cost risks as separate moving parts.
 
-## Current Status
+## Current status
 
-Phase 0: **account guardrails and project setup**.
+**Phase 1 manual deployment is complete. Public evidence is still being sanitized and added to this branch.**
 
-Completed or started:
+The distinction matters: a deployed resource is not portfolio evidence until its configuration and validation are visible without exposing account details or credentials.
 
-- AWS-first direction selected.
-- Region selected: `us-east-2` / Ohio.
-- Non-root admin access created and used for daily console work.
-- Admin user/session observed as `audhip-admin`.
-- Permission set/role observed as `AdminAccess`.
-- Billing access issue for non-root admin was diagnosed and resolved through a root-required account setting.
+| Area | Deployment status | Public evidence status |
+|---|---|---|
+| Account and budget guardrails | Complete | Documentation complete; screenshot pending |
+| VPC, subnet, route, and security group | Complete | Documentation complete; screenshot pending |
+| Ubuntu EC2 and Session Manager access | Complete | Terminal validation recorded; screenshot pending |
+| Dockerized application | Complete | Source/config export and healthy endpoint screenshot pending |
+| Private S3 storage | Complete | Permissions and properties screenshots pending |
+| CloudWatch agent, metrics, and logs | Complete | Agent status recorded; console screenshot pending |
+| Failure and recovery drill | Not started | Planned for Phase 2 |
+| Terraform rebuild | Not started | Planned for Phase 3 |
+| CI validation | Not started | Planned for Phase 4 |
 
-Not yet claimed as complete:
+## Architecture
 
-- EC2 deployment.
-- VPC/subnet/security group buildout.
-- S3 backup path.
-- CloudWatch alarms/logging.
-- Terraform rebuild.
-- GitHub Actions validation.
-- Incident/restore drill.
+```mermaid
+flowchart TD
+    browser["Browser"] -->|"HTTP :80"| sg["Security group"]
+    sg --> ec2["Ubuntu EC2\npublic subnet"]
+    ec2 -->|"container :8000"| app["Flask health service"]
 
-## MVP Direction
+    admin["AWS console"] -->|"Session Manager"| ssm["Systems Manager"]
+    ssm --> ec2
 
-Planned minimum architecture:
-
-- One AWS account with Phase 0 guardrails.
-- One region: `us-east-2` / Ohio.
-- One VPC.
-- One public subnet.
-- One Ubuntu EC2 instance.
-- One small Dockerized service or monitoring target.
-- Minimal inbound security group rules.
-- IAM role for the instance.
-- S3 bucket for backups or artifacts.
-- CloudWatch metrics, logs, and alarms.
-- AWS Budget alert.
-
-## Cost Control Baseline
-
-Initial budget threshold:
-
-```text
-$5/month
+    ec2 -->|"host logs + metrics"| cw["CloudWatch"]
+    ec2 -->|"backup artifacts"| s3["Private S3 bucket"]
 ```
 
-Do not deploy lab resources until billing visibility and budget alerting are confirmed.
+The diagram is intentionally small. This phase does not use a NAT Gateway, load balancer, RDS, ECS, EKS, or Kubernetes.
+
+## What Phase 1 demonstrates
+
+- A single-region VPC and public-subnet network path that I can trace from the route table to the security group and application port.
+- IAM-controlled administration through AWS Systems Manager Session Manager instead of exposing SSH to the internet.
+- A Dockerized application with local and browser validation endpoints.
+- Private S3 storage with public access blocked, versioning enabled, and server-side encryption.
+- CloudWatch host metrics and logs collected by the CloudWatch Agent.
+- Budget alerts and cleanup checks designed for a low-cost lab.
+
+## Key decisions
+
+| Decision | Reason |
+|---|---|
+| AWS first | Keeps the project aligned with the cloud-operations roles I am targeting without splitting effort across providers. |
+| `us-east-1` | One region keeps resource discovery and cleanup simple and provides broad service availability. |
+| EC2 before ECS | Direct host access makes Linux, Docker, IAM, networking, logs, and service management visible instead of hiding them behind a managed platform. |
+| Session Manager before SSH | Removes the need for a public inbound SSH rule and ties administration to AWS identity and audit controls. |
+| Manual before Terraform | Terraform will reproduce a configuration I already understand rather than mask gaps in the manual build. |
 
 ## Documentation
 
-Current docs:
+- [Account and cost guardrails](docs/00-account-guardrails.md)
+- [Architecture](docs/01-architecture.md)
+- [Networking and access](docs/02-networking-access.md)
+- [Compute and application](docs/03-compute-application.md)
+- [Storage, monitoring, and cost controls](docs/04-storage-monitoring-cost.md)
+- [Screenshot and redaction checklist](docs/screenshots/README.md)
 
-- [`docs/00-account-guardrails.md`](docs/00-account-guardrails.md)
+## Evidence standard
 
-Future docs should be added only after the corresponding work exists.
+The repository uses three evidence levels:
 
-Recommended future order:
+- **Recorded:** backed by command output captured during the build.
+- **Screenshot pending:** configured and reported complete, but not yet supported by a sanitized public image.
+- **Planned:** not completed and not described as working.
 
-1. EC2 deployment notes.
-2. Networking and security group notes.
-3. Monitoring and logging notes.
-4. Backup and restore notes.
-5. Terraform workflow notes.
-6. CI/CD validation notes.
-7. Incident/restore drill notes.
+A `404 Not Found` response is not accepted as a health-check result. The final application proof must show a `200` response from `/health` and a running container, not the nginx default site.
 
-## Interview Summary
+## Next phase
 
-> I built a small AWS cloud operations lab to translate my physical homelab experience into public cloud. Phase 0 focused on safe account setup: using non-root admin access, keeping root for root-only tasks, enabling billing visibility, setting a low budget threshold, and documenting the safety baseline before deploying infrastructure.
+Phase 2 will create an operations story instead of adding more services: introduce one controlled failure, observe the alert/log path, restore the service, document the timeline and root cause, and make one corrective change.
+
+## Scope boundary
+
+This is an independent lab, not production AWS experience. Terraform, CI/CD, high availability, autoscaling, and incident recovery are not claimed until their later phases are completed and evidenced.

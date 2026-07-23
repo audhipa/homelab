@@ -1,18 +1,18 @@
 # Account Guardrails
 
-Phase 0 focuses on making the AWS account safe enough for low-cost experimentation before deploying EC2, S3, CloudWatch, Terraform, or other lab resources.
+Phase 0 made the AWS account safe enough for low-cost experimentation before Phase 1 resources were deployed.
 
 ## Region
 
 Chosen region:
 
 ```text
-us-east-2 / Ohio
+us-east-1 / US East (N. Virginia)
 ```
 
 Reason:
 
-- The initial AWS console work is being done in `us-east-2`.
+- The Phase 1 resources are kept in `us-east-1`.
 - Keeping one region reduces confusion and lowers the chance of losing track of resources.
 - The region should stay consistent unless there is a specific reason to change.
 
@@ -75,19 +75,21 @@ Why this matters:
 
 ## Budget Controls
 
-Initial budget threshold:
+Monthly lab budget:
 
 ```text
-$5/month
+$10/month
 ```
 
-Required before deploying resources:
+Configured alert points:
 
-- Confirm non-root admin can access Billing and Cost Management.
-- Create a monthly budget alert at `$5`.
-- Create a forecasted cost alert if available.
-- Confirm the budget notification email.
-- Review Free Tier or credit usage visibility.
+- `$1` actual spend.
+- `$5` actual spend.
+- `$10` actual spend.
+- `$10` forecasted spend.
+- Free Tier usage notifications enabled.
+
+AWS Budgets sends warnings; it is not a hard spending cap. Resource cleanup remains the main cost control.
 
 ## Tagging Standard
 
@@ -99,7 +101,7 @@ Use these tags for AWS lab resources:
 | Owner | audhip |
 | Environment | lab |
 | CostControl | required |
-| DeleteBy | 2026-08-31 |
+| DeleteBy | Per-resource cleanup date in `YYYY-MM-DD` format |
 
 ## Known Cost Risks
 

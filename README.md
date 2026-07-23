@@ -12,20 +12,13 @@ The goal is to show a realistic progression from local infrastructure operations
 | Track | Status | Location | Purpose |
 |---|---|---|---|
 | Physical Homelab | Active / documented | [`homelab-infra-platform/`](homelab-infra-platform/) | Proves Linux, Docker Compose, monitoring, reverse proxy, Ansible, and operational documentation skills. |
-| AWS Cloud Operations | Phase 0 started | [`aws-cloud-ops/`](aws-cloud-ops/) | Translates homelab infrastructure patterns into AWS with account guardrails, cost controls, IAM, networking, monitoring, and later Terraform/CI validation. |
+| AWS Cloud Operations | Phase 1 deployed; evidence review in progress | [`aws-cloud-ops/`](aws-cloud-ops/) | Translates homelab infrastructure patterns into AWS with account guardrails, cost controls, IAM, networking, storage, and monitoring. |
 
 ## Current Focus
 
-The current focus is the AWS Cloud Operations Mini-Platform.
+The current focus is the AWS Cloud Operations Mini-Platform. Phase 1 translated a small part of the physical homelab into a manually deployed AWS environment: an Ubuntu EC2 host, IAM-controlled Session Manager access, a Dockerized service, private S3 storage, CloudWatch collection, network controls, and budget guardrails.
 
-Phase 0 is focused on safety before deployment:
-
-- Use AWS instead of splitting focus across multiple cloud platforms.
-- Use non-root admin access for normal AWS work.
-- Keep root reserved for root-required account tasks.
-- Confirm billing visibility before creating resources.
-- Use a low initial budget threshold of `$5`.
-- Document decisions as they become true instead of creating large placeholder documentation.
+The next work is operational rather than architectural: finish sanitizing Phase 1 evidence, run a controlled failure and recovery drill, and turn the result into a short incident record and runbook.
 
 ## Documentation Rule
 
