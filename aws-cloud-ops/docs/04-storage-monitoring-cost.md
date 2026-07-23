@@ -14,18 +14,16 @@ Expected controls in the deployed configuration:
 | Default encryption | SSE-S3 |
 | Public bucket policy | None |
 
-The screenshot must prove the actual console settings. Do not publish the globally unique bucket name; it is not needed to explain the control design.
+The evidence image proves the actual console settings without publishing the globally unique bucket name.
 
 ## CloudWatch collection
 
-The CloudWatch Agent was recorded as running and configured on the EC2 host. Phase 1 monitoring should make the following evidence visible:
+The CloudWatch Agent was recorded as running and configured on the EC2 host. Phase 1 evidence includes:
 
 - default EC2 metrics in `AWS/EC2`;
-- agent-collected memory and disk metrics in the configured custom namespace;
-- system or application log groups;
-- a basic EC2 status-check alarm if it was created.
+- agent-collected memory and disk metrics in the configured custom namespace.
 
-The documentation does not treat an installed agent as proof that telemetry arrived. The console screenshot must show recent datapoints or recent log events.
+The documentation does not treat an installed agent as proof that telemetry arrived. The console capture shows recent datapoints for both host metrics.
 
 ## Cost controls
 
@@ -40,14 +38,18 @@ Free Tier usage notifications are enabled. Budgets are warnings rather than hard
 
 High-cost services deliberately left out of Phase 1 include NAT Gateway, Elastic Load Balancing, RDS, Fargate, and EKS.
 
-## Evidence placeholders
+## Evidence
 
-Add these sanitized screenshots:
+### S3 controls
 
-```text
-docs/screenshots/04-s3-private-controls.png
-docs/screenshots/05-cloudwatch-evidence.png
-docs/screenshots/06-budget-alerts.png
-```
+![S3 public-access block, versioning, and encryption](screenshots/04-s3-private-controls.png)
 
-The screenshot checklist explains the minimum useful fields and the redactions required before publication.
+### CloudWatch telemetry
+
+![Recent CloudWatch memory and disk metrics](screenshots/05-cloudwatch-evidence.png)
+
+### Budget alerts
+
+![AWS budget and alert thresholds](screenshots/06-budget-alerts.png)
+
+Notification recipients are intentionally excluded from the public evidence.

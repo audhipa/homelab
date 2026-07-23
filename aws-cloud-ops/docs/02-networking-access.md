@@ -41,13 +41,12 @@ ip-10-0-1-171
 
 Session Manager is the normal administration path. This avoids a public SSH rule, SSH key distribution, and source-IP maintenance. It does not make access permissionless: the operator still needs the appropriate IAM permissions, and the instance needs the SSM-managed instance policy and a working SSM agent path.
 
-## Evidence placeholders
+## Evidence
 
-Add these sanitized screenshots:
+![Security-group inbound rules](screenshots/02-network-controls.png)
 
-```text
-docs/screenshots/02-network-controls.png
-docs/screenshots/03-session-and-health.png
-```
+The inbound-rule view shows public HTTP on TCP `80` and no inbound SSH rule.
 
-`02-network-controls.png` should show the inbound security-group rules and enough route-table context to prove the public path. `03-session-and-health.png` should show the Session Manager shell plus the validation commands listed in the compute document.
+![Session Manager application validation](screenshots/03-session-and-health.png)
+
+The terminal evidence shows the running container, successful endpoint checks, and the CloudWatch Agent state. Session, instance, network, and internal-host identifiers were removed.

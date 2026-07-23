@@ -47,7 +47,7 @@ Required pass conditions:
 - `/version` returns the expected application version.
 - The CloudWatch Agent reports `running` and `configured`.
 
-## Troubleshooting note: `/health` returns 404
+## Troubleshooting note: `/health` returned 404
 
 During the build, one `curl http://localhost/health` request returned the nginx `404 Not Found` page. That proves the request reached a web server, but it does **not** prove the Flask health endpoint was working.
 
@@ -57,7 +57,7 @@ The likely path is:
 curl -> host port 80 -> nginx default server -> 404
 ```
 
-Before using the project on a resume, the final evidence must show which process owns port 80 and that `/health` reaches the container. Useful checks are:
+The issue was resolved by validating the container path and the host port mapping. The final capture now shows the container as healthy and HTTP `200` from both `/health` and `/version`. These were the useful checks during diagnosis:
 
 ```bash
 sudo ss -lntp | grep ':80 '
@@ -73,10 +73,8 @@ If port `8000` is healthy but port `80` returns the nginx page, either stop/disa
 
 The repository should eventually contain the exact deployed, sanitized application files under `app/`. They should not be recreated from memory. Copy the real `app.py`, dependency file, `Dockerfile`, and Compose file from the instance after reviewing them for secrets.
 
-## Evidence placeholder
+## Evidence
 
-Add the sanitized terminal capture as:
+![Healthy container, HTTP endpoints, and CloudWatch Agent](screenshots/03-session-and-health.png)
 
-```text
-docs/screenshots/03-session-and-health.png
-```
+This is the final validation capture. It replaces the earlier nginx `404` and is the evidence used for the Phase 1 completion claim.

@@ -6,18 +6,18 @@ I deployed Phase 1 manually on purpose. Before automating the environment, I wan
 
 ## Current status
 
-**Phase 1 manual deployment is complete. Public evidence is still being sanitized and added to this branch.**
+**Phase 1 manual deployment and its public evidence pass are complete.**
 
 The distinction matters: a deployed resource is not portfolio evidence until its configuration and validation are visible without exposing account details or credentials.
 
 | Area | Deployment status | Public evidence status |
 |---|---|---|
-| Account and budget guardrails | Complete | Documentation complete; screenshot pending |
-| VPC, subnet, route, and security group | Complete | Documentation complete; screenshot pending |
-| Ubuntu EC2 and Session Manager access | Complete | Terminal validation recorded; screenshot pending |
-| Dockerized application | Complete | Source/config export and healthy endpoint screenshot pending |
-| Private S3 storage | Complete | Permissions and properties screenshots pending |
-| CloudWatch agent, metrics, and logs | Complete | Agent status recorded; console screenshot pending |
+| Account and budget guardrails | Complete | Budget and alert thresholds captured |
+| VPC, subnet, route, and security group | Complete | EC2 placement and inbound rules captured |
+| Ubuntu EC2 and Session Manager access | Complete | Keyless terminal access captured |
+| Dockerized application | Complete | Healthy container and HTTP `200` endpoints captured; source export pending |
+| Private S3 storage | Complete | Public-access block, versioning, and encryption captured |
+| CloudWatch agent, metrics, and logs | Complete | Agent state and recent host metrics captured |
 | Failure and recovery drill | Not started | Planned for Phase 2 |
 | Terraform rebuild | Not started | Planned for Phase 3 |
 | CI validation | Not started | Planned for Phase 4 |
@@ -65,17 +65,23 @@ The diagram is intentionally small. This phase does not use a NAT Gateway, load 
 - [Networking and access](docs/02-networking-access.md)
 - [Compute and application](docs/03-compute-application.md)
 - [Storage, monitoring, and cost controls](docs/04-storage-monitoring-cost.md)
-- [Screenshot and redaction checklist](docs/screenshots/README.md)
+- [Phase 1 evidence gallery](docs/screenshots/README.md)
 
 ## Evidence standard
 
-The repository uses three evidence levels:
+The repository separates three evidence levels:
 
 - **Recorded:** backed by command output captured during the build.
-- **Screenshot pending:** configured and reported complete, but not yet supported by a sanitized public image.
+- **Captured:** backed by a reviewed, sanitized screenshot in this repository.
 - **Planned:** not completed and not described as working.
 
-A `404 Not Found` response is not accepted as a health-check result. The final application proof must show a `200` response from `/health` and a running container, not the nginx default site.
+An early `404 Not Found` response was rejected as application proof. The final evidence shows a healthy container and HTTP `200` responses from both `/health` and `/version`.
+
+## Evidence
+
+![Healthy Docker service and CloudWatch Agent](docs/screenshots/03-session-and-health.png)
+
+The full six-image evidence set covers compute, network exposure, application health, S3 controls, CloudWatch telemetry, and budget alerts. See the [evidence gallery](docs/screenshots/README.md) for what each image proves and what was redacted.
 
 ## Next phase
 

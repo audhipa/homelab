@@ -47,12 +47,8 @@ flowchart TD
 
 The manual phase has one host and one Availability Zone. It does not claim high availability. A load balancer, private application subnet, database, autoscaling group, NAT Gateway, or container orchestrator would add cost and failure modes before the base system has been operated and recovered.
 
-## Evidence placeholder
+## Evidence
 
-Add the sanitized overview screenshot as:
+![EC2 instance overview](screenshots/01-ec2-overview.png)
 
-```text
-docs/screenshots/01-ec2-overview.png
-```
-
-The screenshot checklist defines the fields worth keeping and the fields that must be redacted.
+The sanitized overview retains the running state, status checks, Availability Zone, instance type, security-group name, IAM role, and IMDSv2 setting. Account, network, and resource identifiers were removed because they add no value to the architecture explanation.

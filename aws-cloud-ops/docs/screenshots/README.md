@@ -1,17 +1,15 @@
-# Phase 1 Screenshot Checklist
+# Phase 1 Evidence Gallery
 
-The goal is six useful screenshots, not a console-tour photo dump. Each image must prove a configuration or validation point that the Markdown alone cannot prove.
+This is a deliberately small evidence set, not a console-tour photo dump. Each image proves a configuration or validation point that the Markdown alone cannot prove.
 
-Do not upload a screenshot until it has been reviewed in the documentation chat.
-
-| File | Capture | Why it is worth keeping |
+| Evidence | What it proves | Why it is worth keeping |
 |---|---|---|
-| `01-ec2-overview.png` | EC2 instance Summary/Details showing running state, status checks, Availability Zone, VPC/subnet, security group, and IAM role. | Proves the compute resource and ties together its identity, network placement, and role. |
-| `02-network-controls.png` | Security-group inbound rules. Include the associated public route in the same image only if it remains readable. | Proves the exposed ports and, most importantly, the absence of public SSH. |
-| `03-session-and-health.png` | Session Manager terminal after running `docker compose ps`, `curl -i /health`, `curl -i /version`, and the CloudWatch Agent status command. | One terminal capture proves keyless access, container state, application health, version, and agent state. |
-| `04-s3-private-controls.png` | S3 Permissions/Properties showing Block Public Access, versioning, and default encryption. A two-panel composite is acceptable if labels remain readable. | Proves storage privacy and data-protection controls without needing the bucket name. |
-| `05-cloudwatch-evidence.png` | Recent custom memory/disk datapoints or log events. Prefer one view that shows timestamps and the namespace/log group. | Proves telemetry reached CloudWatch; an installed agent alone is not enough. |
-| `06-budget-alerts.png` | AWS Budget detail showing the `$10` budget and notification thresholds. | Proves cost guardrails existed before later project phases add resources. |
+| [EC2 overview](01-ec2-overview.png) | Running state, status checks, Availability Zone, instance type, security group, IAM role, and IMDSv2. | Connects compute placement, identity, and host security in one view. |
+| [Network controls](02-network-controls.png) | Public HTTP on TCP `80` and no inbound SSH rule. | Shows the actual attack-surface decision. |
+| [Session and health](03-session-and-health.png) | Healthy container, HTTP `200` from `/health` and `/version`, and a running/configured CloudWatch Agent. | Combines the highest-value runtime checks in one terminal capture. |
+| [S3 private controls](04-s3-private-controls.png) | All four Block Public Access settings, versioning, and SSE-S3 encryption. | Proves storage privacy and data-protection controls without exposing the bucket name. |
+| [CloudWatch evidence](05-cloudwatch-evidence.png) | Recent memory and disk datapoints with Average statistic, 5-minute period, and 1-hour range. | Proves telemetry reached CloudWatch; agent installation alone would not. |
+| [Budget alerts](06-budget-alerts.png) | `$10` monthly budget and actual/forecast alert thresholds. | Proves cost guardrails existed before later phases add resources. |
 
 ## Capture requirements
 
@@ -34,10 +32,4 @@ Do not upload a screenshot until it has been reviewed in the documentation chat.
 
 Resource display names such as `cloud-ops-web-sg` and policy names such as `AmazonSSMManagedInstanceCore` are useful evidence and normally do not need redaction.
 
-## Before replacing a placeholder
-
-1. Capture the image.
-2. Crop it to the proof being documented.
-3. Apply redactions.
-4. Send the redacted image to the documentation chat for a second review.
-5. Replace the pending filename in this directory only after that review.
+All six images were cropped, redacted, and reviewed before publication. Redactions remove identifiers rather than configuration outcomes, so the evidence remains useful without exposing account details.
