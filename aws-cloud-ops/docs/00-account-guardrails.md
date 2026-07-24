@@ -6,19 +6,19 @@ Before deploying the lab, I wanted enough account and cost visibility to experim
 
 ## Decisions
 
-I kept every Phase 1 resource in `us-east-1` so I could find, review, and remove the environment from one region. I reserved the root account for recovery and root-required settings, and I used a non-root administrator identity for normal console work.
+Keeping every Phase 1 resource in `us-east-1` made the environment easier to find, review, and remove from one region. The root account remained reserved for recovery and root-required settings, while normal console work used a non-root administrator identity.
 
-I set the monthly lab budget to `$10`. AWS Budgets provides warnings rather than a hard spending cap, so I treated resource cleanup as the primary cost control.
+The monthly lab budget was set to `$10`. Because AWS Budgets provides warnings rather than a hard spending cap, resource cleanup remained the primary cost control.
 
 ## Build
 
-I completed three guardrail layers before the main deployment:
+Three guardrail layers came before the main deployment:
 
-1. I enabled MFA and avoided routine root-account use.
-2. I enabled IAM user and role access to Billing and Cost Management from the root account.
-3. I created budget notifications at `$1`, `$5`, and `$10` of actual spend, plus a `$10` forecast alert. I also enabled Free Tier usage notifications.
+1. MFA protected the account, and the root identity stayed out of routine use.
+2. From the root account, I enabled IAM user and role access to Billing and Cost Management.
+3. Budget notifications covered `$1`, `$5`, and `$10` of actual spend plus a `$10` forecast alert, with Free Tier usage notifications enabled as well.
 
-I tagged lab resources consistently:
+Lab resources received a consistent tag set:
 
 | Key | Value |
 |---|---|
@@ -28,7 +28,7 @@ I tagged lab resources consistently:
 | CostControl | `required` |
 | DeleteBy | Per-resource cleanup date |
 
-The main cost risks I tracked were running EC2 instances, orphaned EBS volumes, unattached Elastic IPs, retained CloudWatch logs, accumulated S3 objects, and resources created in the wrong region. I deliberately excluded NAT Gateway, load balancers, RDS, Fargate, and EKS from Phase 1.
+The main cost risks were running EC2 instances, orphaned EBS volumes, unattached Elastic IPs, retained CloudWatch logs, accumulated S3 objects, and resources created in the wrong region. To limit that exposure, Phase 1 deliberately excluded NAT Gateway, load balancers, RDS, Fargate, and EKS.
 
 ## Validation
 
@@ -38,7 +38,7 @@ My first billing check from the non-root administrator session failed with:
 AccessDeniedException: IAM user access not activated
 ```
 
-I traced the error to the account-level billing access setting, enabled IAM access to billing from the root account, signed out of root, and confirmed the billing view from the non-root session.
+Tracing the error led to the account-level billing access setting. After enabling IAM access to billing from the root account and signing out, I confirmed the billing view from the non-root session.
 
 The final budget evidence shows the `$10` monthly limit and all four alert thresholds:
 
@@ -48,4 +48,4 @@ The final budget evidence shows the `$10` monthly limit and all four alert thres
 
 Administrator permissions alone did not activate the Billing console for IAM identities. The account-level root setting was a separate dependency.
 
-I also learned not to describe a budget as a spending cap. It only warns me after actual or forecasted thresholds are crossed. The practical control is still a cleanup routine that checks EC2, EBS, Elastic IPs, S3, CloudWatch logs, and current-month cost after lab work.
+The budget also cannot be described as a spending cap; it only warns me after actual or forecasted thresholds are crossed. The practical control is still a cleanup routine that checks EC2, EBS, Elastic IPs, S3, CloudWatch logs, and current-month cost after lab work.

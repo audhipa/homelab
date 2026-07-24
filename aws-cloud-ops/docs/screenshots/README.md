@@ -2,13 +2,13 @@
 
 ## Goal
 
-I kept the evidence set small and focused on claims that configuration files or prose could not prove by themselves. Each image records an actual deployment state or validation result from Phase 1.
+The evidence set stays small and focuses on claims that configuration files or prose cannot prove by themselves. Each image records an actual deployment state or validation result from Phase 1.
 
 ## Decisions
 
-I chose six screenshots that cover compute, network exposure, runtime health, storage controls, telemetry, and cost alerts. I cropped repeated browser chrome and removed account IDs, IP addresses, resource IDs, ARNs, email addresses, session identifiers, internal hostnames, and globally unique bucket names.
+Six screenshots cover compute, network exposure, runtime health, storage controls, telemetry, and cost alerts. To keep them focused and safe to publish, I cropped repeated browser chrome and removed account IDs, IP addresses, resource IDs, ARNs, email addresses, session identifiers, internal hostnames, and globally unique bucket names.
 
-I retained service names, states, ports, metric names, policy names, and timestamps because they are the parts that support the technical story.
+Service names, states, ports, metric names, policy names, and timestamps remain visible because they support the technical story.
 
 ## Evidence
 
@@ -52,6 +52,6 @@ The `$10` monthly budget and actual/forecast alert thresholds were configured.
 
 ## Lessons learned
 
-A screenshot is useful only when it proves a meaningful claim. I did not keep separate images for Docker versions, every endpoint, each CloudWatch log group, or every VPC component because those would repeat evidence without strengthening the project story.
+A screenshot is useful only when it proves a meaningful claim. Separate images for Docker versions, every endpoint, each CloudWatch log group, or every VPC component would repeat evidence without strengthening the project story, so they were left out.
 
-I also learned to preserve evidence integrity while sanitizing it. I removed identifiers that created unnecessary exposure, but kept the configuration outcome readable. The result is enough to verify the Phase 1 claims without publishing account-specific details.
+Sanitizing the screenshots also reinforced the importance of evidence integrity. Removing identifiers reduced unnecessary exposure while keeping the configuration outcome readable. The result is enough to verify the Phase 1 claims without publishing account-specific details.

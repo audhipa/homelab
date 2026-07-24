@@ -2,15 +2,15 @@
 
 ## Goal
 
-I created this runbook so the normal operating path for the homelab would remain repeatable: prepare local configuration, validate the model, deploy the stack, inspect health, check routes and metrics, and stop services cleanly.
+This runbook keeps the homelab's normal operating path repeatable: prepare local configuration, validate the model, deploy the stack, inspect health, check routes and metrics, and stop services cleanly.
 
 ## Decisions
 
-I keep machine-specific inventory and credentials outside Git. The committed `.example` files show the required shape, while `ansible/inventory.ini` and `docker/.env` hold the local values.
+Machine-specific inventory and credentials stay outside Git. The committed `.example` files show the required shape, while `ansible/inventory.ini` and `docker/.env` hold the local values.
 
-I use `scripts/deploy-stack.sh` for the normal deployment because it checks for Docker and `docker/.env`, validates the Compose model, and stops on errors. I keep the manual Compose commands documented so I can bypass the wrapper during diagnosis.
+The normal deployment runs through `scripts/deploy-stack.sh`, which checks for Docker and `docker/.env`, validates the Compose model, and stops on errors. Manual Compose commands remain documented so I can bypass the wrapper during diagnosis.
 
-I treat backup and recovery as incomplete. The repository contains a backup script, but I have not validated a restore, and the script's hard-coded volume names may differ from the names created by the active Compose project.
+Backup and recovery remain incomplete. The repository contains a backup script, but no restore has been validated, and the script's hard-coded volume names may differ from the names created by the active Compose project.
 
 ## Build
 
@@ -23,7 +23,7 @@ cp ansible/inventory.example.ini ansible/inventory.ini
 cp docker/.env.example docker/.env
 ```
 
-I then replace the example inventory and Grafana values locally.
+The example inventory and Grafana values are then replaced locally.
 
 ### Deploy the stack
 
@@ -93,13 +93,13 @@ The script reports:
 
 ### Apply or preview the host baseline
 
-I first verify Ansible connectivity:
+Ansible work begins with a connectivity check:
 
 ```bash
 ansible -i ansible/inventory.ini homelab -m ping
 ```
 
-I preview the playbook in check mode:
+Next, check mode previews the playbook:
 
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/site.yml --check
@@ -121,7 +121,7 @@ The current backup command is:
 
 The script attempts to archive the named volumes `uptime-kuma-data`, `prometheus-data`, and `grafana-data` into `backups/homelab-volumes-<timestamp>.tar.gz`.
 
-I do not use the presence of that archive as recovery proof. Before relying on it, I need to resolve the actual Compose volume names, verify the archive contents, restore them into clean volumes, restart the services, and validate the recovered state.
+The presence of that archive does not count as recovery proof. Before relying on it, I need to resolve the actual Compose volume names, verify the archive contents, restore them into clean volumes, restart the services, and validate the recovered state.
 
 ## Validation
 
@@ -139,7 +139,7 @@ curl -I -H "Host: kuma.ozul" http://localhost
 curl -H "Host: prometheus.ozul" http://localhost
 ```
 
-I use `GET` for Prometheus because `curl -I` sends `HEAD`, which returned `405 Method Not Allowed` even when the service was healthy.
+Prometheus uses `GET` here because `curl -I` sends `HEAD`, which returned `405 Method Not Allowed` even when the service was healthy.
 
 ### Node Exporter metrics
 

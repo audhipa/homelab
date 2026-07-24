@@ -2,7 +2,7 @@
 
 ## Goal
 
-I kept the failures and diagnostic commands that changed how I operate the homelab. The purpose of this record is to make each symptom reproducible and to separate host, network, container, proxy, and application failures before changing configuration.
+This record preserves the failures and diagnostic commands that changed how I operate the homelab. Each symptom stays reproducible, and host, network, container, proxy, and application failures remain separate until the evidence supports a configuration change.
 
 ## Decisions
 
@@ -16,7 +16,7 @@ My diagnostic order is:
 6. confirm firewall and remote-access paths;
 7. verify metrics at both the exporter and Prometheus target layers.
 
-I record exact errors when I have them. For broader failure categories, I keep likely causes separate from confirmed resolutions so the documentation does not turn a guess into history.
+Exact errors are recorded when available. For broader failure categories, likely causes remain separate from confirmed resolutions so the documentation does not turn a guess into history.
 
 ## Build
 
@@ -28,9 +28,9 @@ The symptom is:
 docker: command not found
 ```
 
-I treat this as a host prerequisite failure: Docker Engine is not installed, or the CLI is not available in the current shell.
+This points to a host prerequisite failure: Docker Engine is not installed, or the CLI is not available in the current shell.
 
-After installation or a shell-permission change, I validate both required interfaces:
+After installation or a shell-permission change, both required interfaces need validation:
 
 ```bash
 docker --version
@@ -39,17 +39,17 @@ docker compose version
 
 ### Docker Compose validation failure
 
-I start with:
+Diagnosis starts with:
 
 ```bash
 docker compose -f docker/compose.yml config
 ```
 
-The checks I make next are YAML indentation, the environment file, duplicate host-port bindings, and whether the installed Compose version supports the configured options.
+The next checks cover YAML indentation, the environment file, duplicate host-port bindings, and whether the installed Compose version supports the configured options.
 
 ### Service not reachable
 
-I inspect state and logs before changing ports or firewall rules:
+State and logs come before changes to ports or firewall rules:
 
 ```bash
 docker compose -f docker/compose.yml ps
@@ -62,7 +62,7 @@ The failure can be a stopped or unhealthy container, a host-port conflict, a fir
 
 Grafana's login screen is expected. The Compose defaults are `admin/change-me-locally` only when local environment values do not override them.
 
-If I need to reset an unknown local password, I use the Grafana CLI inside the container:
+If an unknown local password needs to be reset, I use the Grafana CLI inside the container:
 
 ```bash
 docker compose -f docker/compose.yml exec grafana grafana cli admin reset-admin-password '<new-local-password>'
@@ -104,7 +104,7 @@ curl http://localhost:9100/metrics | head
 
 ### Ansible cannot reach the host
 
-I reproduce the connection separately from the playbook:
+The connection is reproduced separately from the playbook:
 
 ```bash
 ansible -i ansible/inventory.ini homelab -m ping
@@ -120,7 +120,7 @@ The exact error was:
 Bad owner or permissions on /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 ```
 
-The SSH client rejected a system configuration file with unsafe ownership or permissions. I corrected and verified it with:
+The SSH client rejected a system configuration file with unsafe ownership or permissions. Correction and verification used:
 
 ```bash
 sudo chown root:root /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
@@ -136,7 +136,7 @@ root:root 644 /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 
 ### Grafana has no metrics
 
-I check the dependency chain rather than starting with the dashboard:
+The dependency chain comes before the dashboard:
 
 1. Prometheus container state.
 2. Prometheus target health at `http://prometheus.ozul/targets`.
@@ -151,7 +151,7 @@ Prometheus originally needed an explicit scrape configuration and mount. The wor
 - includes `node-exporter:9100` as a static target;
 - restarts the Compose stack after the configuration changes.
 
-I validate and apply that state with:
+That state is validated and applied with:
 
 ```bash
 docker compose -f docker/compose.yml config
@@ -174,8 +174,8 @@ The completed monitoring path has evidence at three levels:
 
 An HTTP error can still prove useful reachability. Prometheus returning `405` confirmed that the request reached the service; the request method was wrong. The same principle applies to Caddy and Grafana responses: I use the exact status and response source to decide which boundary failed.
 
-Shell pipelines can also create misleading errors. I now reproduce an endpoint without `head` before treating `curl` error `23` as a network or service failure.
+Shell pipelines can also create misleading errors. Reproducing the endpoint without `head` now comes before treating `curl` error `23` as a network or service failure.
 
 Finally, SSH security checks can block automation before Ansible runs any task. Correct inventory values are not enough when the local SSH client refuses unsafe configuration-file permissions.
 
-When the implementation changes, I update the architecture, network map, runbook, and this troubleshooting record together so the documented path does not drift from the repository.
+When the implementation changes, the architecture, network map, runbook, and troubleshooting record all need the same update so the documented path does not drift from the repository.

@@ -2,15 +2,15 @@
 
 ## Goal
 
-I designed Phase 1 as a small manual deployment that connected AWS networking, compute, identity, containers, storage, monitoring, and cost controls without adding managed services that did not support the first operations story.
+Phase 1 took shape as a small manual deployment connecting AWS networking, compute, identity, containers, storage, monitoring, and cost controls. Managed services that did not support the first operations story stayed out of scope.
 
 ## Decisions
 
-I used a single VPC, public subnet, EC2 instance, and Availability Zone. This kept the request path visible and the monthly cost low.
+A single VPC, public subnet, EC2 instance, and Availability Zone kept the request path visible and the monthly cost low.
 
-I chose Session Manager for administration instead of public SSH. I used an EC2 instance role so the host could reach Systems Manager and CloudWatch without static AWS credentials. I kept S3 outside the public request path and blocked public bucket access.
+For administration, I chose Session Manager instead of public SSH. An EC2 instance role lets the host reach Systems Manager and CloudWatch without static AWS credentials, while S3 remains outside the public request path with public bucket access blocked.
 
-I did not add a load balancer, private application subnet, database, autoscaling group, NAT Gateway, or container orchestrator. Those services would have introduced cost and new failure modes before I had validated the base system.
+A load balancer, private application subnet, database, autoscaling group, NAT Gateway, and container orchestrator all remained out of scope. Adding them before validating the base system would have introduced cost and new failure modes.
 
 ## Build
 
@@ -43,11 +43,11 @@ flowchart TD
 
 ## Validation
 
-I confirmed the instance was running, both EC2 status checks passed, the expected Availability Zone and instance type were visible, an IAM role was attached, and IMDSv2 was required.
+The EC2 overview confirmed a running instance, two passing status checks, the expected Availability Zone and instance type, an attached IAM role, and required IMDSv2.
 
 ![EC2 instance overview](screenshots/01-ec2-overview.png)
 
-I then validated the architecture through the request path and control plane: public HTTP reached port `80`, Session Manager reached the host without SSH, the container served the Flask endpoints, CloudWatch received telemetry, and the S3 bucket remained private.
+End-to-end validation covered both the request path and control plane: public HTTP reached port `80`, Session Manager reached the host without SSH, the container served the Flask endpoints, CloudWatch received telemetry, and the S3 bucket remained private.
 
 ## Lessons learned
 

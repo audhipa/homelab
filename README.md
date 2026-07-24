@@ -29,7 +29,7 @@ The physical build established the local operations pattern:
 Laptop -> Tailscale -> Ubuntu OptiPlex -> Caddy -> monitoring services
 ```
 
-I then translated that pattern into AWS:
+That operating pattern then became the foundation for the AWS build:
 
 ```text
 Browser -> VPC controls -> Ubuntu EC2 -> Dockerized service
@@ -37,7 +37,7 @@ Administrator -> Session Manager -> EC2
 EC2 -> CloudWatch and private S3
 ```
 
-The cloud project is not a copy of the homelab. I replaced Tailscale and SSH administration with IAM-controlled Session Manager, local host monitoring with CloudWatch telemetry, and local storage concepts with a private S3 bucket. I kept the first cloud phase intentionally small so those differences remained visible.
+The cloud project is not a copy of the homelab. In AWS, Tailscale and SSH administration gave way to IAM-controlled Session Manager, local host monitoring became CloudWatch telemetry, and a private S3 bucket replaced local storage concepts. Keeping the first cloud phase intentionally small made those differences visible.
 
 ## Validation
 
@@ -49,7 +49,7 @@ For the AWS environment, I validated the EC2 status checks, security-group rules
 
 The physical lab taught me how service discovery, host ports, reverse proxying, firewall rules, and metrics collection interact on one machine. The AWS build forced me to separate those same concerns across cloud networking, IAM, instance metadata, managed access, object storage, and telemetry services.
 
-I also learned to distinguish an artifact from a validated capability. The homelab contains a backup script, a Terraform placeholder, and a workflow definition, but I do not claim tested recovery, Terraform-managed infrastructure, or active repository-level CI yet. Those become complete only after the implementation path and evidence exist.
+Another lesson was the difference between an artifact and a validated capability. The homelab contains a backup script, a Terraform placeholder, and a workflow definition, but none supports a claim of tested recovery, Terraform-managed infrastructure, or active repository-level CI yet. Those capabilities become complete only after both the implementation path and evidence exist.
 
 ## Detailed documentation
 

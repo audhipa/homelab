@@ -2,17 +2,17 @@
 
 ## Goal
 
-I designed the homelab as a single-host platform that I could reach privately, operate from one repository, and inspect from the Ubuntu host through each containerized service.
+The homelab began as a single-host platform I could reach privately, operate from one repository, and inspect from the Ubuntu host through each containerized service.
 
 The architecture needed to stay useful without hiding the Linux, network, and container boundaries I was trying to learn.
 
 ## Decisions
 
-I used the OptiPlex as both the Docker host and the Ansible-managed node. Splitting the first version across multiple machines would have increased hardware and network complexity without improving the initial monitoring objective.
+The OptiPlex serves as both the Docker host and the Ansible-managed node. Splitting the first version across multiple machines would have increased hardware and network complexity without improving the initial monitoring objective.
 
-I kept the administrative and browser paths on Tailscale. SSH handles host operations, while Caddy provides the normal dashboard entry point on TCP `80` through `tailscale0`.
+Both the administrative and browser paths stay on Tailscale. SSH handles host operations, while Caddy provides the normal dashboard entry point on TCP `80` through `tailscale0`.
 
-I gave each service one responsibility:
+Each service has one responsibility:
 
 | Component | Role in my build |
 |---|---|
@@ -52,11 +52,11 @@ The request and metrics flows are:
 5. Grafana queries Prometheus for dashboards.
 6. Uptime Kuma checks the configured service endpoints independently.
 
-The Compose file also publishes ports `3000`, `3001`, `9090`, and `9100` on the host. I used those bindings for direct validation, but Caddy is the intended dashboard entry point. The Ansible baseline limits Caddy's inbound rule to TCP `80` on `tailscale0`; Node Exporter is not intended for broad exposure.
+The Compose file also publishes ports `3000`, `3001`, `9090`, and `9100` on the host. Those bindings support direct validation, but Caddy remains the intended dashboard entry point. The Ansible baseline limits Caddy's inbound rule to TCP `80` on `tailscale0`; Node Exporter is not intended for broad exposure.
 
 ## Validation
 
-I checked the running container set:
+Validation began with the running container set:
 
 ```bash
 docker compose -f docker/compose.yml ps
@@ -66,7 +66,7 @@ The expected services were `caddy`, `grafana`, `uptime-kuma`, `prometheus`, and 
 
 ![Docker Compose service state](screenshots/docker-compose-ps.jpg)
 
-I then checked the two observability paths separately:
+The observability paths were checked separately:
 
 - Prometheus showed both configured scrape jobs as healthy.
 - Grafana displayed host metrics from the Prometheus data source.
@@ -84,6 +84,6 @@ The captured Prometheus view reports the self-scrape endpoint as `prometheus:909
 
 The reverse proxy simplified normal access, but it did not remove the backend ports or container network. A complete request still depends on the laptop resolving the intended hostname, the Tailscale path, UFW, Caddy's `Host` match, Docker DNS, and the backend process.
 
-I also learned that adding a monitoring container is not the same as collecting metrics. Prometheus did not scrape Node Exporter until I created `docker/prometheus.yml`, mounted it at `/etc/prometheus/prometheus.yml`, and added `node-exporter:9100` as a target.
+Adding a monitoring container also turned out to be different from collecting metrics. Prometheus did not scrape Node Exporter until I created `docker/prometheus.yml`, mounted it at `/etc/prometheus/prometheus.yml`, and added `node-exporter:9100` as a target.
 
 The single-host design is appropriate for this phase, but it is not highly available. If the OptiPlex, Docker daemon, Tailscale path, or local network fails, the platform becomes unavailable.

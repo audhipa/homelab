@@ -2,13 +2,13 @@
 
 ## Goal
 
-I created this directory to mark where infrastructure-as-code can enter the project once I have a real provider-backed resource to manage.
+This directory marks where infrastructure as code can enter the project once there is a real provider-backed resource to manage.
 
 ## Decisions
 
-I did not create placeholder `.tf` files or claim Terraform-managed infrastructure. The current homelab services run through Docker Compose, and the Ubuntu host baseline is managed with Ansible. Terraform becomes useful when the project adds resources such as cloud infrastructure, virtual machines, DNS records, or provider-supported network controls.
+No placeholder `.tf` files or claims of Terraform-managed infrastructure appear here. The current homelab services run through Docker Compose, and Ansible manages the Ubuntu host baseline. Terraform becomes useful when the project adds resources such as cloud infrastructure, virtual machines, DNS records, or provider-supported network controls.
 
-I also separated the future Terraform safety model from local configuration:
+The future Terraform safety model is also separate from local configuration:
 
 - provider credentials will stay outside the repository;
 - environment values will not be committed in real `.tfvars` files;
@@ -41,7 +41,7 @@ terraform validate
 terraform plan
 ```
 
-An apply will not count as reproducible until I can destroy or otherwise remove the test resource and rebuild it from the committed configuration.
+An apply will not count as reproducible until the test resource can be destroyed or otherwise removed and rebuilt from the committed configuration.
 
 ## Lessons learned
 

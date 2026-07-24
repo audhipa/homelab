@@ -2,19 +2,19 @@
 
 ## Goal
 
-I wanted the lab to include three operational controls beyond simply running an EC2 instance: private object storage, telemetry that proved the host was observable, and budget warnings that made cost visible.
+Beyond simply running an EC2 instance, the lab needed three operational controls: private object storage, telemetry that proved the host was observable, and budget warnings that made cost visible.
 
 ## Decisions
 
-I used S3 for test artifacts rather than public website content. I blocked all public access, enforced bucket ownership, enabled versioning, and used SSE-S3 default encryption.
+S3 stores test artifacts rather than public website content. Its baseline blocks all public access, enforces bucket ownership, enables versioning, and uses SSE-S3 default encryption.
 
-I used the CloudWatch Agent because default EC2 metrics do not include the host memory and disk measurements I wanted. I kept the monthly budget at `$10` and excluded higher-cost services from Phase 1.
+Default EC2 metrics do not include the host memory and disk measurements I wanted, so the design uses the CloudWatch Agent. A `$10` monthly budget and the exclusion of higher-cost services kept Phase 1 cost-conscious.
 
 ## Build
 
 ### Private S3 storage
 
-I configured the bucket with:
+The bucket uses:
 
 | Control | Setting |
 |---|---|
@@ -24,20 +24,20 @@ I configured the bucket with:
 | Default encryption | SSE-S3 |
 | Public bucket policy | None |
 
-### CloudWatch telemetry
+### CloudWatch setup
 
-I installed and configured the CloudWatch Agent on the EC2 host. The final setup combined default EC2 metrics with agent-collected memory and disk metrics. Docker Compose also used the `awslogs` driver to send application logs to CloudWatch Logs in `us-east-1`.
+On the EC2 host, the CloudWatch Agent supplements default EC2 metrics with memory and disk measurements. Docker Compose also uses the `awslogs` driver to send application logs to CloudWatch Logs in `us-east-1`.
 
 ### Cost controls
 
-I configured a `$10` monthly budget with notifications at:
+The `$10` monthly budget sends notifications at:
 
 - `$1` actual spend;
 - `$5` actual spend;
 - `$10` actual spend;
 - `$10` forecasted spend.
 
-I also enabled Free Tier usage notifications and omitted NAT Gateway, Elastic Load Balancing, RDS, Fargate, and EKS from this phase.
+Free Tier usage notifications add another warning layer. NAT Gateway, Elastic Load Balancing, RDS, Fargate, and EKS remain outside this phase.
 
 ## Validation
 
@@ -51,7 +51,7 @@ The console evidence shows all four Block Public Access settings, versioning, an
 
 ![Recent CloudWatch memory and disk metrics](screenshots/05-cloudwatch-evidence.png)
 
-I confirmed recent memory and disk datapoints using the Average statistic, a 5-minute period, and a 1-hour view. This proved that telemetry reached CloudWatch rather than merely showing that the agent was installed.
+Recent memory and disk datapoints appeared with the Average statistic, a 5-minute period, and a 1-hour view. That result proved telemetry reached CloudWatch rather than merely showing that the agent was installed.
 
 ### Budget alerts
 
@@ -61,7 +61,7 @@ The budget evidence shows the monthly limit and actual/forecast thresholds while
 
 ## Lessons learned
 
-Monitoring had two separate success conditions: the agent had to be running on the host, and CloudWatch had to show recent datapoints. I did not consider the setup complete until both were true.
+Monitoring had two separate success conditions: the agent had to be running on the host, and CloudWatch had to show recent datapoints. Both had to be true before the setup counted as complete.
 
 Versioning and encryption improved the S3 baseline, but they did not make the bucket private on their own. Blocking public access and avoiding a public bucket policy were separate controls.
 

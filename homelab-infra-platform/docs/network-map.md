@@ -2,13 +2,13 @@
 
 ## Goal
 
-I wanted a private management path and one memorable browser entry point without publishing personal addresses, credentials, or host inventory values in the repository.
+The network design needed a private management path and one memorable browser entry point without publishing personal addresses, credentials, or host inventory values in the repository.
 
 ## Decisions
 
-Tailscale became the intended remote path between my laptop and the OptiPlex. I kept real inventory values in the untracked `ansible/inventory.ini` file and documented only the logical topology here.
+Tailscale became the intended remote path between my laptop and the OptiPlex. Real inventory values stay in the untracked `ansible/inventory.ini` file; only the logical topology is documented here.
 
-Caddy handles normal dashboard access on TCP `80`. I retained the direct backend port mappings for local testing and diagnosis, but I do not treat them as the preferred user path.
+Caddy handles normal dashboard access on TCP `80`. Direct backend port mappings remain available for local testing and diagnosis, but they are not the preferred user path.
 
 ## Build
 
@@ -52,7 +52,7 @@ flowchart TD
 
 ## Validation
 
-I validate the Caddy routes on the host with explicit `Host` headers:
+On the host, Caddy routes are validated with explicit `Host` headers:
 
 ```bash
 curl -I -H "Host: grafana.ozul" http://localhost
@@ -60,13 +60,13 @@ curl -I -H "Host: kuma.ozul" http://localhost
 curl -H "Host: prometheus.ozul" http://localhost
 ```
 
-I validate Node Exporter directly with:
+Node Exporter is validated directly with:
 
 ```bash
 curl http://localhost:9100/metrics | head
 ```
 
-Finally, I confirm the Prometheus-to-exporter path in the target view:
+Finally, the Prometheus target view confirms the exporter path:
 
 ![Prometheus target health](screenshots/prometheus-targets.jpg)
 
