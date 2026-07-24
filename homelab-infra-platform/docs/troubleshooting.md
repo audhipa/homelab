@@ -170,7 +170,7 @@ The completed monitoring path has evidence at three levels:
 
 ![Grafana metrics validation](screenshots/grafana-dashboard.png)
 
-## Lessons learned
+## Lessons Learned
 
 An HTTP error can still prove useful reachability. Prometheus returning `405` confirmed that the request reached the service; the request method was wrong. The same principle applies to Caddy and Grafana responses: I use the exact status and response source to decide which boundary failed.
 
