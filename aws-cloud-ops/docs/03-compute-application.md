@@ -1,36 +1,37 @@
 # Compute and Dockerized Application
 
-## Host baseline
+## Goal
 
-The Phase 1 host is an Ubuntu EC2 instance administered through Session Manager.
+I wanted a small workload that made the entire runtime path inspectable: Ubuntu on EC2, Docker Compose, Gunicorn, Flask, container health, host-port publishing, application logs, and HTTP validation.
 
-Recorded output from the build:
+## Decisions
 
-```text
-Operating system: Ubuntu 24.04.4 LTS (Noble Numbat)
-Session user: ssm-user
-Private host identity: ip-10-0-1-171
-Initial web-service check: nginx active/running
-CloudWatch Agent: running and configured
-```
+I used Ubuntu 24.04 LTS because it matched my existing Linux experience. I used Flask for a minimal service and Gunicorn as the application server. The container listens on port `8000`, and Docker Compose publishes it on host port `80`.
 
-Nginx was useful as an early port-80 test. It is not application proof by itself.
+I added explicit `/health` and `/version` endpoints so I could distinguish basic network reachability from application health and deployed version. I configured the container to restart unless stopped and added a 30-second health check against the internal Flask endpoint.
 
-## Application contract
+## Build
 
-The small Flask service exposes three endpoints:
+The application exposes three endpoints:
 
-| Endpoint | Expected result |
+| Endpoint | Response |
 |---|---|
-| `/` | Service identity, environment, version, host, and UTC timestamp. |
-| `/health` | HTTP `200` with a healthy status. |
-| `/version` | Current application version. |
+| `/` | Service name, environment, version, hostname, and UTC timestamp |
+| `/health` | Healthy status and service name |
+| `/version` | Current application version |
 
-The container listens on port `8000`; the host exposes the service on port `80`.
+The image uses `python:3.12-slim`, installs pinned Flask and Gunicorn versions, and starts two Gunicorn workers on `0.0.0.0:8000`. Docker Compose maps `80:8000`, sets the lab environment values, sends container logs to the CloudWatch Logs group, and runs the internal health check.
+
+The exact deployed files are included in the repository:
+
+- [`app.py`](../app/app.py)
+- [`requirements.txt`](../app/requirements.txt)
+- [`Dockerfile`](../app/Dockerfile)
+- [`compose.yml`](../app/compose.yml)
 
 ## Validation
 
-Run these from the application directory before capturing evidence:
+I validated the workload from the application directory with:
 
 ```bash
 sudo docker compose ps
@@ -40,24 +41,20 @@ curl -i http://localhost/version
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
 ```
 
-Required pass conditions:
+The final result showed:
 
-- The application container is `Up` or `healthy`.
-- `/health` returns HTTP `200` and the Flask JSON response.
-- `/version` returns the expected application version.
-- The CloudWatch Agent reports `running` and `configured`.
+- the `ops-demo` container in a healthy state;
+- HTTP `200` from `/health`;
+- HTTP `200` and version `0.1.0` from `/version`;
+- the CloudWatch Agent in `running` and `configured` states.
 
-## Troubleshooting note: `/health` returned 404
+![Healthy container, HTTP endpoints, and CloudWatch Agent](screenshots/03-session-and-health.png)
 
-During the build, one `curl http://localhost/health` request returned the nginx `404 Not Found` page. That proves the request reached a web server, but it does **not** prove the Flask health endpoint was working.
+## Lessons learned
 
-The likely path is:
+My first `curl http://localhost/health` request returned nginx's `404 Not Found` page. That response proved only that port `80` reached nginx; it did not prove that Flask was healthy.
 
-```text
-curl -> host port 80 -> nginx default server -> 404
-```
-
-The issue was resolved by validating the container path and the host port mapping. The final capture now shows the container as healthy and HTTP `200` from both `/health` and `/version`. These were the useful checks during diagnosis:
+I diagnosed the path by checking the port listener, Docker container state, recent container logs, the Flask endpoint on port `8000`, and the published endpoint on port `80`:
 
 ```bash
 sudo ss -lntp | grep ':80 '
@@ -67,14 +64,4 @@ curl -i http://127.0.0.1:8000/health
 curl -i http://localhost/health
 ```
 
-If port `8000` is healthy but port `80` returns the nginx page, either stop/disable the temporary nginx service and map Docker to port 80, or deliberately configure nginx as the reverse proxy. Document whichever design is actually used.
-
-## Source/configuration evidence still needed
-
-The repository should eventually contain the exact deployed, sanitized application files under `app/`. They should not be recreated from memory. Copy the real `app.py`, dependency file, `Dockerfile`, and Compose file from the instance after reviewing them for secrets.
-
-## Evidence
-
-![Healthy container, HTTP endpoints, and CloudWatch Agent](screenshots/03-session-and-health.png)
-
-This is the final validation capture. It replaces the earlier nginx `404` and is the evidence used for the Phase 1 completion claim.
+The key lesson was to validate each boundary separately: host listener, Docker mapping, container process, and application route. The final HTTP `200` responses replaced the earlier nginx `404` as the completion evidence.
