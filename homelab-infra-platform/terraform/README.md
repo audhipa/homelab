@@ -43,7 +43,7 @@ terraform plan
 
 An apply will not count as reproducible until the test resource can be destroyed or otherwise removed and rebuilt from the committed configuration.
 
-## Lessons learned
+## Lessons Learned
 
 Creating a Terraform directory is not infrastructure as code. The proof begins when a provider-backed resource is represented in configuration, validated, planned, applied, and reconciled with its actual state.
 
