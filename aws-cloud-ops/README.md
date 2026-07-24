@@ -1,64 +1,70 @@
 # AWS Cloud Operations Mini-Platform
 
-This is a small AWS operations lab built to translate my Ubuntu, Docker, and monitoring homelab experience into public-cloud work I can explain and troubleshoot.
+## Goal
 
-I deployed Phase 1 manually on purpose. Before automating the environment, I wanted to understand the network path, host access, instance role, container runtime, log collection, storage controls, and cost risks as separate moving parts.
+I built this project to translate my Ubuntu, Docker, and monitoring homelab experience into a small AWS environment I could deploy, secure, monitor, and troubleshoot myself.
 
-## Current status
+I kept the first phase narrow: one manually deployed workload, one clear network path, keyless administrative access, private storage, host telemetry, and cost guardrails. My goal was to understand each moving part before reproducing the environment with Terraform.
 
-**Phase 1 manual deployment and its public evidence pass are complete.**
+## Decisions
 
-The distinction matters: a deployed resource is not portfolio evidence until its configuration and validation are visible without exposing account details or credentials.
+| Decision | Why I made it |
+|---|---|
+| AWS first | It aligns with the cloud-operations roles I am targeting and keeps me focused on one provider. |
+| `us-east-1` | A single region simplified resource tracking and cleanup while providing broad service availability. |
+| EC2 before ECS | Direct host access exposed the Linux, Docker, IAM, networking, logging, and service-management layers I wanted to learn. |
+| Session Manager instead of SSH | I avoided a public SSH rule and tied administrative access to AWS identity controls. |
+| Manual deployment before Terraform | I wanted the later infrastructure code to reproduce a system I already understood. |
+| One host and one Availability Zone | High availability would have added cost and complexity before I had operated the base system. |
 
-| Area | Deployment status | Public evidence status |
-|---|---|---|
-| Account and budget guardrails | Complete | Budget and alert thresholds captured |
-| VPC, subnet, route, and security group | Complete | EC2 placement and inbound rules captured |
-| Ubuntu EC2 and Session Manager access | Complete | Keyless terminal access captured |
-| Dockerized application | Complete | Healthy container and HTTP `200` endpoints captured; source export pending |
-| Private S3 storage | Complete | Public-access block, versioning, and encryption captured |
-| CloudWatch agent, metrics, and logs | Complete | Agent state and recent host metrics captured |
-| Failure and recovery drill | Not started | Planned for Phase 2 |
-| Terraform rebuild | Not started | Planned for Phase 3 |
-| CI validation | Not started | Planned for Phase 4 |
-
-## Architecture
+## Build
 
 ```mermaid
 flowchart TD
     browser["Browser"] -->|"HTTP :80"| sg["Security group"]
-    sg --> ec2["Ubuntu EC2\npublic subnet"]
+    sg --> ec2["Ubuntu EC2<br/>public subnet"]
     ec2 -->|"container :8000"| app["Flask health service"]
 
     admin["AWS console"] -->|"Session Manager"| ssm["Systems Manager"]
     ssm --> ec2
 
-    ec2 -->|"host logs + metrics"| cw["CloudWatch"]
-    ec2 -->|"backup artifacts"| s3["Private S3 bucket"]
+    ec2 -->|"logs + host metrics"| cw["CloudWatch"]
+    ec2 -->|"test artifacts"| s3["Private S3 bucket"]
 ```
 
-The diagram is intentionally small. This phase does not use a NAT Gateway, load balancer, RDS, ECS, EKS, or Kubernetes.
+I created a VPC and public subnet, attached an internet gateway, and allowed only TCP port `80` for the public application path. I used an EC2 instance role and Systems Manager Session Manager for administration, so the host did not need stored AWS keys or an inbound SSH rule.
 
-## What Phase 1 demonstrates
+On Ubuntu EC2, I deployed a small Flask service with Docker Compose and Gunicorn. The container listens on port `8000`, while Compose publishes the service on host port `80`. I configured a private S3 bucket with public access blocked, versioning enabled, and SSE-S3 encryption. I also installed the CloudWatch Agent, sent container logs to CloudWatch, collected host memory and disk metrics, and configured a `$10` monthly AWS budget.
 
-- A single-region VPC and public-subnet network path that I can trace from the route table to the security group and application port.
-- IAM-controlled administration through AWS Systems Manager Session Manager instead of exposing SSH to the internet.
-- A Dockerized application with local and browser validation endpoints.
-- Private S3 storage with public access blocked, versioning enabled, and server-side encryption.
-- CloudWatch host metrics and logs collected by the CloudWatch Agent.
-- Budget alerts and cleanup checks designed for a low-cost lab.
+The exact application and container configuration are available in [`app/`](app/).
 
-## Key decisions
+## Validation
 
-| Decision | Reason |
-|---|---|
-| AWS first | Keeps the project aligned with the cloud-operations roles I am targeting without splitting effort across providers. |
-| `us-east-1` | One region keeps resource discovery and cleanup simple and provides broad service availability. |
-| EC2 before ECS | Direct host access makes Linux, Docker, IAM, networking, logs, and service management visible instead of hiding them behind a managed platform. |
-| Session Manager before SSH | Removes the need for a public inbound SSH rule and ties administration to AWS identity and audit controls. |
-| Manual before Terraform | Terraform will reproduce a configuration I already understand rather than mask gaps in the manual build. |
+I treated deployment and proof as separate steps. I validated that:
 
-## Documentation
+- the EC2 instance was running and passed both status checks;
+- the security group exposed HTTP on TCP `80` without exposing SSH;
+- Session Manager provided administrative access;
+- the Docker container reported healthy;
+- `/health` and `/version` returned HTTP `200`;
+- the CloudWatch Agent reported `running` and `configured`;
+- recent memory and disk datapoints arrived in CloudWatch;
+- the S3 privacy, versioning, and encryption controls were enabled;
+- the budget and four alert thresholds were active.
+
+![Healthy Docker service and CloudWatch Agent](docs/screenshots/03-session-and-health.png)
+
+The complete evidence set is in the [Phase 1 evidence gallery](docs/screenshots/README.md).
+
+## Lessons learned
+
+The most useful failure happened when `curl http://localhost/health` returned nginx's `404 Not Found` page. The request had reached a web server, but it had not reached the Flask health endpoint. I separated the host listener, Docker port mapping, container state, and application route during diagnosis, then validated the final path with HTTP `200` responses.
+
+I also learned that an installed monitoring agent is not proof of working telemetry. I waited for recent CloudWatch datapoints before treating monitoring as complete.
+
+This phase deliberately stops short of Terraform, CI/CD, high availability, autoscaling, and recovery testing. Those are follow-on phases, not claims attached to this build.
+
+## Detailed documentation
 
 - [Account and cost guardrails](docs/00-account-guardrails.md)
 - [Architecture](docs/01-architecture.md)
@@ -66,27 +72,3 @@ The diagram is intentionally small. This phase does not use a NAT Gateway, load 
 - [Compute and application](docs/03-compute-application.md)
 - [Storage, monitoring, and cost controls](docs/04-storage-monitoring-cost.md)
 - [Phase 1 evidence gallery](docs/screenshots/README.md)
-
-## Evidence standard
-
-The repository separates three evidence levels:
-
-- **Recorded:** backed by command output captured during the build.
-- **Captured:** backed by a reviewed, sanitized screenshot in this repository.
-- **Planned:** not completed and not described as working.
-
-An early `404 Not Found` response was rejected as application proof. The final evidence shows a healthy container and HTTP `200` responses from both `/health` and `/version`.
-
-## Evidence
-
-![Healthy Docker service and CloudWatch Agent](docs/screenshots/03-session-and-health.png)
-
-The full six-image evidence set covers compute, network exposure, application health, S3 controls, CloudWatch telemetry, and budget alerts. See the [evidence gallery](docs/screenshots/README.md) for what each image proves and what was redacted.
-
-## Next phase
-
-Phase 2 will create an operations story instead of adding more services: introduce one controlled failure, observe the alert/log path, restore the service, document the timeline and root cause, and make one corrective change.
-
-## Scope boundary
-
-This is an independent lab, not production AWS experience. Terraform, CI/CD, high availability, autoscaling, and incident recovery are not claimed until their later phases are completed and evidenced.
