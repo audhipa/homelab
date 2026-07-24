@@ -1,95 +1,77 @@
 # Homelab Infrastructure Platform
 
-A low-cost infrastructure automation homelab built on an Ubuntu Dell OptiPlex. The project is designed to show practical DevOps and cloud-infrastructure skills with a small, reproducible platform: Docker Compose services, Ansible host configuration, monitoring, reverse proxy routing, scripts, documentation, and CI validation.
+## Goal
 
-This repository is public-safe by design. Real secrets, passwords, tokens, private keys, and local-only inventory values should stay out of version control.
+I built this project to turn a low-cost Dell OptiPlex into a small infrastructure platform I could operate remotely, automate, monitor, and troubleshoot.
 
-## Project Objective
+The goal was not to install the largest possible toolset. I wanted one understandable system that connected Ubuntu administration, private remote access, containers, reverse proxy routing, metrics, uptime checks, host automation, operating scripts, and evidence.
 
-The goal is to build a resume-ready homelab that demonstrates operational habits, not just tool installation. The current focus is:
+## Decisions
 
-- Running a small monitoring stack on inexpensive hardware.
-- Managing host baseline configuration with Ansible.
-- Exposing internal services through a simple Caddy reverse proxy.
-- Validating changes with safe local commands and GitHub Actions.
-- Documenting what is complete separately from what is planned.
+| Decision | Why I made it |
+|---|---|
+| Reuse an Ubuntu OptiPlex | Existing hardware kept the cost low and exposed the host operating-system layer. |
+| Tailscale for remote access | It gave my laptop a private path to the host without opening the dashboards directly to the public internet. |
+| Docker Compose before Kubernetes | One host and five services did not need an orchestrator; Compose kept service relationships inspectable. |
+| Caddy on port `80` | Friendly `.ozul` hostnames gave me one browser entry point instead of relying on backend ports. |
+| Prometheus and Node Exporter | Prometheus collected both its own metrics and host metrics at a 15-second interval. |
+| Grafana and Uptime Kuma | I separated metrics visualization from service-availability monitoring. |
+| Ansible for the host baseline | Package installation, the `/opt/homelab` directory, and UFW policy became repeatable host configuration. |
 
-## Current Completed Milestone
+## Build
 
-The current milestone is a working monitoring and reverse-proxy stack on the Ubuntu OptiPlex.
-
-Completed:
-
-- Docker Compose monitoring stack is running.
-- Services include Grafana, Uptime Kuma, Prometheus, Node Exporter, and Caddy.
-- Caddy routes friendly internal hostnames:
-  - `http://grafana.ozul`
-  - `http://kuma.ozul`
-  - `http://prometheus.ozul`
-- Prometheus scrape targets are configured for:
-  - `prometheus`
-  - `node-exporter`
-- Ansible baseline playbook configures core packages, `/opt/homelab`, and UFW rules.
-- Firewall baseline allows SSH and Caddy HTTP traffic through `tailscale0`.
-- Repo hygiene and validation workflow are committed.
-
-Planned, not yet claimed as complete:
-
-- Grafana dashboard provisioning.
-- Alerting rules and notification routing.
-- Backup restore testing.
-- Terraform resources for real cloud, VM, or network infrastructure.
-
-## Architecture Summary
-
-The homelab is accessed from a personal laptop over Tailscale and SSH. The OptiPlex runs Ubuntu and hosts the monitoring stack with Docker Compose. Caddy listens on port `80` and reverse proxies friendly internal hostnames to backend containers. Prometheus scrapes metrics from itself and Node Exporter. Grafana uses Prometheus metrics for dashboards, and Uptime Kuma monitors service availability.
-
-See [docs/architecture.md](docs/architecture.md) and [docs/network-map.md](docs/network-map.md) for more detail.
-
-## Tools Used
-
-- Ubuntu on Dell OptiPlex
-- Tailscale for private remote access
-- SSH for administration
-- Docker Compose for service orchestration
-- Caddy for reverse proxy routing
-- Prometheus for metrics collection
-- Node Exporter for host metrics
-- Grafana for dashboards
-- Uptime Kuma for uptime checks
-- Ansible for baseline host automation
-- GitHub Actions for repository validation
-- Shell scripts for health checks, deployment, and backup workflows
-
-## How To Run The Stack
-
-From the repository root:
-
-```bash
-docker compose -f docker/compose.yml up -d
+```mermaid
+flowchart TD
+    laptop["Personal laptop"] -->|"Tailscale + SSH"| host["Ubuntu OptiPlex"]
+    laptop -->|"Browser over Tailscale"| caddy["Caddy :80"]
+    host --> compose["Docker Compose"]
+    compose --> caddy
+    caddy --> grafana["Grafana :3000"]
+    caddy --> kuma["Uptime Kuma :3001"]
+    caddy --> prometheus["Prometheus :9090"]
+    prometheus --> exporter["Node Exporter :9100"]
 ```
 
-Check service state:
+I started with a Compose scaffold for Grafana, Uptime Kuma, Prometheus, and Node Exporter, then expanded the health-check script so I could inspect the host and container state together.
 
-```bash
-docker compose -f docker/compose.yml ps
-```
+Next, I added Caddy and a dedicated Prometheus configuration. Caddy reverse proxies three internal hostnames:
 
-Stop the stack:
+| Hostname | Backend |
+|---|---|
+| `http://grafana.ozul` | `grafana:3000` |
+| `http://kuma.ozul` | `uptime-kuma:3001` |
+| `http://prometheus.ozul` | `prometheus:9090` |
 
-```bash
-docker compose -f docker/compose.yml down
-```
+Prometheus scrapes `localhost:9090` for its own metrics and `node-exporter:9100` for host metrics. I added matching network aliases to the Compose default network so the `.ozul` names resolve inside the stack as well as through Caddy's host-based routing.
 
-## How To Validate The Stack
+I then replaced the original Ansible placeholder with a host baseline that:
 
-Validate Docker Compose syntax:
+- refreshes the apt cache and installs the core administration packages;
+- creates `/opt/homelab` with root ownership and mode `0755`;
+- denies incoming traffic by default and allows outgoing traffic;
+- allows OpenSSH for host administration;
+- allows TCP `80` through `tailscale0`;
+- enables UFW.
+
+The exact implementation is in:
+
+- [`docker/compose.yml`](docker/compose.yml)
+- [`docker/Caddyfile`](docker/Caddyfile)
+- [`docker/prometheus.yml`](docker/prometheus.yml)
+- [`ansible/site.yml`](ansible/site.yml)
+- [`scripts/`](scripts/)
+
+## Validation
+
+I validate the Compose model before starting or updating the stack:
 
 ```bash
 docker compose -f docker/compose.yml config
+docker compose -f docker/compose.yml up -d
+docker compose -f docker/compose.yml ps
 ```
 
-Validate Caddy routes locally:
+I validate the reverse-proxy routes from the Docker host:
 
 ```bash
 curl -I -H "Host: grafana.ozul" http://localhost
@@ -97,41 +79,36 @@ curl -I -H "Host: kuma.ozul" http://localhost
 curl -H "Host: prometheus.ozul" http://localhost
 ```
 
-Validate Node Exporter metrics:
+I use a `GET` request for Prometheus because its web interface returns `405 Method Not Allowed` to the `HEAD` request generated by `curl -I`.
+
+I validate host metrics and the Ansible path with:
 
 ```bash
 curl http://localhost:9100/metrics | head
-```
-
-Validate Ansible connectivity and check-mode:
-
-```bash
 ansible -i ansible/inventory.ini homelab -m ping
 ansible-playbook -i ansible/inventory.ini ansible/site.yml --check
 ```
 
-## Screenshots
+[![Docker Compose services running](docs/screenshots/docker-compose-ps.jpg)](docs/screenshots/docker-compose-ps.jpg)
 
-Docker Compose service status after deployment:
+The evidence set also includes:
 
-![Docker Compose services running](docs/screenshots/docker-compose-ps.jpg)
+- [Prometheus scrape targets](docs/screenshots/prometheus-targets.jpg)
+- [Grafana metrics dashboard](docs/screenshots/grafana-dashboard.png)
+- [Uptime Kuma service monitoring](docs/screenshots/uptime-kuma-dashboard.png)
 
-Prometheus targets with the configured scrape jobs up:
+## Lessons learned
 
-![Prometheus targets](docs/screenshots/prometheus-targets.jpg)
+Host networking and container networking are separate layers. Caddy needed the correct browser `Host` header, Docker service names for its upstreams, and network aliases for the internal `.ozul` names. Prometheus also needed its configuration mounted explicitly before Node Exporter appeared as a scrape target.
 
-Grafana metrics dashboard:
+Several failures improved the operating model: Prometheus rejected a `HEAD` request even though the service was healthy, `curl` reported error `23` when `head` closed a metrics pipe early, and Ansible connectivity failed until I corrected unsafe permissions on a system SSH configuration file. I kept the exact symptoms and fixes in the [troubleshooting record](docs/troubleshooting.md).
 
-![Grafana dashboard](docs/screenshots/grafana-dashboard.png)
+This project still has clear boundaries. The Grafana dashboard and Uptime Kuma monitors are stored in service volumes rather than provisioned from committed configuration. The backup script has not passed a restore test, and its volume-name assumptions still need to be reconciled with Docker Compose. The Terraform directory contains no managed resources. A validation workflow definition is present under this project, but it is not active GitHub Actions CI because workflows must live at the repository-root `.github/workflows/` path.
 
-Uptime Kuma service monitoring dashboard:
+## Detailed documentation
 
-![Uptime Kuma dashboard](docs/screenshots/uptime-kuma-dashboard.png)
-
-## Resume Value
-
-This project demonstrates practical experience with Linux administration, Docker Compose, monitoring, reverse proxy configuration, Ansible automation, firewall-aware service exposure, operational runbooks, troubleshooting documentation, and CI-backed repo hygiene.
-
-Example resume bullet:
-
-> Built and documented a low-cost Ubuntu homelab platform using Docker Compose, Caddy, Prometheus, Grafana, Uptime Kuma, Node Exporter, Ansible, and GitHub Actions to demonstrate repeatable infrastructure operations and monitoring workflows.
+- [Architecture](docs/architecture.md)
+- [Network and service map](docs/network-map.md)
+- [Operations runbook](docs/runbook.md)
+- [Troubleshooting record](docs/troubleshooting.md)
+- [Terraform boundary](terraform/README.md)

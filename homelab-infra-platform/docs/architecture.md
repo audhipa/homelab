@@ -1,83 +1,89 @@
-# Architecture Overview
+# Homelab Architecture
 
-This document describes the current homelab architecture as implemented. It avoids private addresses and secrets while still documenting the operational design.
+## Goal
 
-## Current Architecture
+I designed the homelab as a single-host platform that I could reach privately, operate from one repository, and inspect from the Ubuntu host through each containerized service.
 
-```text
-Personal Laptop
-|
-| Tailscale / SSH / Browser
-v
-Ubuntu OptiPlex
-|
-| Docker Compose
-v
-Caddy Reverse Proxy
-|
-+--> Grafana
-+--> Uptime Kuma
-+--> Prometheus
-|
-+--> Node Exporter
+The architecture needed to stay useful without hiding the Linux, network, and container boundaries I was trying to learn.
+
+## Decisions
+
+I used the OptiPlex as both the Docker host and the Ansible-managed node. Splitting the first version across multiple machines would have increased hardware and network complexity without improving the initial monitoring objective.
+
+I kept the administrative and browser paths on Tailscale. SSH handles host operations, while Caddy provides the normal dashboard entry point on TCP `80` through `tailscale0`.
+
+I gave each service one responsibility:
+
+| Component | Role in my build |
+|---|---|
+| Personal laptop | Operator workstation for SSH, browser access, Git, and Ansible. |
+| Tailscale | Private path between the laptop and the OptiPlex. |
+| Ubuntu OptiPlex | Docker host and Ansible-managed infrastructure node. |
+| Docker Compose | Defines and runs the five-service stack from `docker/compose.yml`. |
+| Caddy | Routes `.ozul` hostnames to the dashboard services. |
+| Prometheus | Scrapes its own metrics and Node Exporter every 15 seconds. |
+| Node Exporter | Exposes host metrics through the host root filesystem mount and host PID namespace. |
+| Grafana | Visualizes Prometheus metrics. |
+| Uptime Kuma | Tracks service availability. |
+| Ansible | Applies the package, directory, and UFW baseline. |
+
+## Build
+
+```mermaid
+flowchart TD
+    laptop["Personal laptop"] -->|"Tailscale"| host["Ubuntu OptiPlex"]
+    laptop -->|"SSH"| host
+    laptop -->|"HTTP + .ozul host"| caddy["Caddy :80"]
+
+    host --> compose["Docker Compose"]
+    compose --> caddy
+    caddy --> grafana["Grafana :3000"]
+    caddy --> kuma["Uptime Kuma :3001"]
+    caddy --> prometheus["Prometheus :9090"]
+    prometheus --> exporter["Node Exporter :9100"]
 ```
 
-## Components
+The request and metrics flows are:
 
-- **Personal laptop** - Used as the operator workstation for SSH, browser access, Git, and documentation updates.
-- **Tailscale** - Provides the private access path between the laptop and the OptiPlex.
-- **Ubuntu OptiPlex** - Main homelab host running Docker Compose and Ansible-managed baseline configuration.
-- **Docker Compose** - Runs the monitoring and reverse-proxy services from `docker/compose.yml`.
-- **Caddy** - Reverse proxies friendly internal hostnames to backend containers:
-  - `http://grafana.ozul` -> `grafana:3000`
-  - `http://kuma.ozul` -> `uptime-kuma:3001`
-  - `http://prometheus.ozul` -> `prometheus:9090`
-- **Prometheus** - Collects metrics from itself and Node Exporter.
-- **Node Exporter** - Exposes host metrics on port `9100` for Prometheus scraping.
-- **Grafana** - Visualizes Prometheus metrics.
-- **Uptime Kuma** - Monitors service availability.
-- **Ansible** - Applies baseline host configuration, packages, `/opt/homelab`, and firewall rules.
-- **GitHub Actions** - Validates YAML, shell scripts, and Docker Compose syntax.
+1. My laptop reaches the OptiPlex over Tailscale.
+2. Browser requests arrive at Caddy on port `80` with a `.ozul` hostname.
+3. Caddy sends the request to `grafana:3000`, `uptime-kuma:3001`, or `prometheus:9090` on the Compose network.
+4. Prometheus scrapes `localhost:9090` and `node-exporter:9100`.
+5. Grafana queries Prometheus for dashboards.
+6. Uptime Kuma checks the configured service endpoints independently.
 
-## Data And Traffic Flow
+The Compose file also publishes ports `3000`, `3001`, `9090`, and `9100` on the host. I used those bindings for direct validation, but Caddy is the intended dashboard entry point. The Ansible baseline limits Caddy's inbound rule to TCP `80` on `tailscale0`; Node Exporter is not intended for broad exposure.
 
-1. The operator connects from a personal laptop to the OptiPlex over Tailscale, SSH, or browser.
-2. Docker Compose starts Caddy, Grafana, Uptime Kuma, Prometheus, and Node Exporter.
-3. Caddy listens on port `80` and routes `.ozul` hostnames to internal backend services.
-4. Prometheus scrapes:
-   - `localhost:9090` for Prometheus self-metrics.
-   - `node-exporter:9100` for host metrics.
-5. Grafana reads metrics from Prometheus for dashboards.
-6. Uptime Kuma checks service availability from inside the lab environment.
+## Validation
 
-## Security Notes
+I checked the running container set:
 
-- Do not commit real credentials, API tokens, private keys, or personal network details.
-- Keep real environment values in untracked local files such as `docker/.env`.
-- Prefer SSH keys over passwords for host access.
-- Prefer Caddy hostnames over direct dashboard ports for normal browser access.
-- Node Exporter should not be broadly exposed outside the trusted lab path.
-- The Ansible baseline allows Caddy HTTP traffic through `tailscale0`, keeping the intended access path narrow.
-- Treat this as a learning lab, not a production security boundary.
+```bash
+docker compose -f docker/compose.yml ps
+```
 
-## Screenshots
+The expected services were `caddy`, `grafana`, `uptime-kuma`, `prometheus`, and `node-exporter`.
 
-Prometheus target validation:
+![Docker Compose service state](screenshots/docker-compose-ps.jpg)
+
+I then checked the two observability paths separately:
+
+- Prometheus showed both configured scrape jobs as healthy.
+- Grafana displayed host metrics from the Prometheus data source.
+- Uptime Kuma displayed the configured service monitors.
 
 ![Prometheus targets](screenshots/prometheus-targets.jpg)
 
-Grafana dashboard backed by Prometheus metrics:
+The captured Prometheus view reports the self-scrape endpoint as `prometheus:9090`, while the committed `docker/prometheus.yml` uses `localhost:9090`. Both address the Prometheus container from inside the Compose network, but the difference means the screenshot proves the two jobs were healthy at capture time rather than proving byte-for-byte parity with the current file.
 
 ![Grafana dashboard](screenshots/grafana-dashboard.png)
 
-Uptime Kuma monitoring view:
+![Uptime Kuma monitoring](screenshots/uptime-kuma-dashboard.png)
 
-![Uptime Kuma dashboard](screenshots/uptime-kuma-dashboard.png)
+## Lessons learned
 
-## Future Enhancements
+The reverse proxy simplified normal access, but it did not remove the backend ports or container network. A complete request still depends on the laptop resolving the intended hostname, the Tailscale path, UFW, Caddy's `Host` match, Docker DNS, and the backend process.
 
-- Add Grafana dashboard provisioning.
-- Add Ansible roles for Docker installation and user setup.
-- Add backup restore testing.
-- Add alerting once baseline monitoring is stable.
-- Add Terraform only when there is an actual cloud, VM, or network resource to manage.
+I also learned that adding a monitoring container is not the same as collecting metrics. Prometheus did not scrape Node Exporter until I created `docker/prometheus.yml`, mounted it at `/etc/prometheus/prometheus.yml`, and added `node-exporter:9100` as a target.
+
+The single-host design is appropriate for this phase, but it is not highly available. If the OptiPlex, Docker daemon, Tailscale path, or local network fails, the platform becomes unavailable.
