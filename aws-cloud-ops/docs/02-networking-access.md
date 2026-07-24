@@ -50,7 +50,7 @@ The security-group evidence shows public HTTP on TCP `80` and no inbound SSH rul
 
 The terminal evidence shows the healthy container, successful endpoint checks, and the CloudWatch Agent state.
 
-## Lessons learned
+## Lessons Learned
 
 Because security groups are stateful, response traffic did not require a separate inbound rule. The build also clarified the difference between routing and exposure: the internet gateway and public route made a path possible, but the security group and listening process determined whether the service was reachable.
 
