@@ -1,147 +1,126 @@
-# Troubleshooting Guide
+# Homelab Troubleshooting Record
 
-Use this guide to document repeatable fixes. Add exact symptoms, checks, and resolutions as the lab grows.
+## Goal
 
-## `docker: command not found`
+This record preserves the failures and diagnostic commands that changed how I operate the homelab. Each symptom stays reproducible, and host, network, container, proxy, and application failures remain separate until the evidence supports a configuration change.
 
-Symptom:
+## Decisions
+
+My diagnostic order is:
+
+1. confirm the host and Docker CLI are available;
+2. validate the Compose model;
+3. inspect container state and logs;
+4. test the backend directly;
+5. test Caddy with the intended `Host` header;
+6. confirm firewall and remote-access paths;
+7. verify metrics at both the exporter and Prometheus target layers.
+
+Exact errors are recorded when available. For broader failure categories, likely causes remain separate from confirmed resolutions so the documentation does not turn a guess into history.
+
+## Build
+
+### Docker CLI unavailable
+
+The symptom is:
 
 ```text
 docker: command not found
 ```
 
-Cause:
+This points to a host prerequisite failure: Docker Engine is not installed, or the CLI is not available in the current shell.
 
-- Docker Engine is not installed, or the Docker CLI is not available in the current shell.
+After installation or a shell-permission change, both required interfaces need validation:
 
-Fix:
+```bash
+docker --version
+docker compose version
+```
 
-- Install Docker Engine and the Docker Compose plugin on the Ubuntu host.
-- Reopen the shell or verify the user has the expected Docker permissions.
-- Validate with:
+### Docker Compose validation failure
 
-  ```bash
-  docker --version
-  docker compose version
-  ```
-
-## Docker Compose Fails Validation
-
-Checks:
+Diagnosis starts with:
 
 ```bash
 docker compose -f docker/compose.yml config
 ```
 
-Likely causes:
+The next checks cover YAML indentation, the environment file, duplicate host-port bindings, and whether the installed Compose version supports the configured options.
 
-- Bad YAML indentation.
-- Missing environment file.
-- Duplicate port bindings.
-- Unsupported Compose options on the installed Docker version.
+### Service not reachable
 
-## Service Is Not Reachable
-
-Checks:
+State and logs come before changes to ports or firewall rules:
 
 ```bash
 docker compose -f docker/compose.yml ps
 docker compose -f docker/compose.yml logs -f <service-name>
 ```
 
-Likely causes:
+The failure can be a stopped or unhealthy container, a host-port conflict, a firewall rule, or a service listening on a different port than the Compose mapping expects.
 
-- Container is stopped or unhealthy.
-- Port conflict on the host.
-- Firewall is blocking access.
-- Service is listening on a different port than expected.
+### Grafana requests credentials
 
-## Grafana Asks For Username And Password
+Grafana's login screen is expected. The Compose defaults are `admin/change-me-locally` only when local environment values do not override them.
 
-Cause:
-
-- This is expected Grafana behavior. Grafana requires a login before dashboards are available.
-- The Compose default is `admin/change-me-locally` unless changed through local environment values.
-
-Fix:
-
-- Use the locally configured Grafana admin credentials.
-- If the password is unknown, reset it with the Grafana CLI from inside the container instead of committing a real password to Git.
-
-Example:
+If an unknown local password needs to be reset, I use the Grafana CLI inside the container:
 
 ```bash
 docker compose -f docker/compose.yml exec grafana grafana cli admin reset-admin-password '<new-local-password>'
 ```
 
-Do not commit the real password.
+The real password remains in local configuration rather than Git.
 
-## Prometheus Route Returns 405 With `curl -I`
+### Prometheus returns `405` to `curl -I`
 
-Symptom:
+The symptom is:
 
 ```text
 HTTP/1.1 405 Method Not Allowed
 ```
 
-Cause:
-
-- `curl -I` sends an HTTP `HEAD` request. Prometheus expects `GET` or `OPTIONS` for the web UI.
-
-Fix:
+`curl -I` sends an HTTP `HEAD` request. Prometheus accepts `GET` for the web interface, so I changed the route check to:
 
 ```bash
 curl -H "Host: prometheus.ozul" http://localhost
 ```
 
-## `curl: (23) Failure writing output to destination`
+This was a method mismatch, not proof that the proxy or Prometheus process was down.
 
-Symptom:
+### `curl` reports error `23` when sampling metrics
+
+The symptom is:
 
 ```text
 curl: (23) Failure writing output to destination
 ```
 
-Cause:
+This occurred with:
 
-- This can happen when piping a large response to `head`. `head` exits after reading enough lines, and `curl` reports that the downstream pipe closed early.
+```bash
+curl http://localhost:9100/metrics | head
+```
 
-Fix:
+`head` exits after reading enough lines, which can close the pipe while `curl` is still writing. When the requested metric lines are present and the endpoint works without the pipe, I treat this specific error as a pipeline side effect rather than an exporter failure.
 
-- Treat this as harmless for validations such as:
+### Ansible cannot reach the host
 
-  ```bash
-  curl http://localhost:9100/metrics | head
-  ```
-
-## Ansible Cannot Reach Host
-
-Checks:
+The connection is reproduced separately from the playbook:
 
 ```bash
 ansible -i ansible/inventory.ini homelab -m ping
 ```
 
-Likely causes:
+The next checks are the inventory hostname or address, SSH key availability, remote user permissions, and host reachability.
 
-- Wrong hostname or address in inventory.
-- SSH key not available.
-- Remote user does not have required permissions.
-- Host is powered off or unreachable.
+### System SSH configuration blocks Ansible
 
-## Ansible SSH Fails Because Of System SSH Config Permissions
-
-Symptom:
+The exact error was:
 
 ```text
 Bad owner or permissions on /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 ```
 
-Cause:
-
-- The SSH client refuses to load system SSH config files if ownership or permissions are unsafe.
-
-Fix:
+The SSH client rejected a system configuration file with unsafe ownership or permissions. Correction and verification used:
 
 ```bash
 sudo chown root:root /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
@@ -149,48 +128,54 @@ sudo chmod 0644 /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 stat -c '%U:%G %a %n' /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 ```
 
-Expected safe state:
+The expected state is:
 
 ```text
 root:root 644 /etc/ssh/ssh_config.d/20-systemd-ssh-proxy.conf
 ```
 
-## Metrics Missing in Grafana
+### Grafana has no metrics
 
-Checks:
+The dependency chain comes before the dashboard:
 
-- Confirm Prometheus is running.
-- Confirm exporters are reachable from Prometheus.
-- Confirm Grafana has a Prometheus data source configured.
-- Check Prometheus targets at `http://prometheus.ozul/targets`.
+1. Prometheus container state.
+2. Prometheus target health at `http://prometheus.ozul/targets`.
+3. Node Exporter reachability.
+4. Grafana's Prometheus data-source configuration.
 
-## Prometheus Is Not Scraping Node Exporter
+### Prometheus does not scrape Node Exporter
 
-Cause:
+Prometheus originally needed an explicit scrape configuration and mount. The working configuration:
 
-- Prometheus is missing the Node Exporter scrape configuration, or the config is not mounted into the container.
+- mounts `docker/prometheus.yml` at `/etc/prometheus/prometheus.yml`;
+- includes `node-exporter:9100` as a static target;
+- restarts the Compose stack after the configuration changes.
 
-Fix:
+That state is validated and applied with:
 
-- Mount `docker/prometheus.yml` into the Prometheus container.
-- Include the `node-exporter:9100` target.
-- Validate the Compose file:
+```bash
+docker compose -f docker/compose.yml config
+docker compose -f docker/compose.yml up -d
+```
 
-  ```bash
-  docker compose -f docker/compose.yml config
-  ```
+## Validation
 
-- Restart the stack if the running container needs the updated config:
+The completed monitoring path has evidence at three levels:
 
-  ```bash
-  docker compose -f docker/compose.yml up -d
-  ```
+- Node Exporter returns host metrics.
+- Prometheus shows its own job and the `node-exporter` job as healthy.
+- Grafana visualizes the collected Prometheus data.
 
-## Documentation Drift
+![Prometheus target validation](screenshots/prometheus-targets.jpg)
 
-When the actual setup changes, update:
+![Grafana metrics validation](screenshots/grafana-dashboard.png)
 
-- `docs/architecture.md`
-- `docs/network-map.md`
-- `docs/runbook.md`
-- `docs/troubleshooting.md`
+## Lessons learned
+
+An HTTP error can still prove useful reachability. Prometheus returning `405` confirmed that the request reached the service; the request method was wrong. The same principle applies to Caddy and Grafana responses: I use the exact status and response source to decide which boundary failed.
+
+Shell pipelines can also create misleading errors. Reproducing the endpoint without `head` now comes before treating `curl` error `23` as a network or service failure.
+
+Finally, SSH security checks can block automation before Ansible runs any task. Correct inventory values are not enough when the local SSH client refuses unsafe configuration-file permissions.
+
+When the implementation changes, the architecture, network map, runbook, and troubleshooting record all need the same update so the documented path does not drift from the repository.

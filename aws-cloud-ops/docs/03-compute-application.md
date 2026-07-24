@@ -2,13 +2,13 @@
 
 ## Goal
 
-I wanted a small workload that made the entire runtime path inspectable: Ubuntu on EC2, Docker Compose, Gunicorn, Flask, container health, host-port publishing, application logs, and HTTP validation.
+The workload needed to stay small enough for the entire runtime path to remain inspectable: Ubuntu on EC2, Docker Compose, Gunicorn, Flask, container health, host-port publishing, application logs, and HTTP validation.
 
 ## Decisions
 
-I used Ubuntu 24.04 LTS because it matched my existing Linux experience. I used Flask for a minimal service and Gunicorn as the application server. The container listens on port `8000`, and Docker Compose publishes it on host port `80`.
+Ubuntu 24.04 LTS matched my existing Linux experience. Flask kept the service minimal, while Gunicorn handled the application server role. The container listens on port `8000`, and Docker Compose publishes it on host port `80`.
 
-I added explicit `/health` and `/version` endpoints so I could distinguish basic network reachability from application health and deployed version. I configured the container to restart unless stopped and added a 30-second health check against the internal Flask endpoint.
+Explicit `/health` and `/version` endpoints separate basic network reachability from application health and deployed version. The container also restarts unless stopped and runs a 30-second health check against the internal Flask endpoint.
 
 ## Build
 
@@ -31,7 +31,7 @@ The exact deployed files are included in the repository:
 
 ## Validation
 
-I validated the workload from the application directory with:
+From the application directory, the validation commands were:
 
 ```bash
 sudo docker compose ps
@@ -54,7 +54,7 @@ The final result showed:
 
 My first `curl http://localhost/health` request returned nginx's `404 Not Found` page. That response proved only that port `80` reached nginx; it did not prove that Flask was healthy.
 
-I diagnosed the path by checking the port listener, Docker container state, recent container logs, the Flask endpoint on port `8000`, and the published endpoint on port `80`:
+Diagnosis followed the runtime path: port listener, Docker container state, recent container logs, Flask on port `8000`, and the published endpoint on port `80`.
 
 ```bash
 sudo ss -lntp | grep ':80 '

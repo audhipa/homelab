@@ -1,66 +1,77 @@
-# Network Map
+# Network and Service Map
 
-Use this file to document the network topology of the homelab without committing private addresses, secrets, or personal network details.
+## Goal
 
-## Access Path
+The network design needed a private management path and one memorable browser entry point without publishing personal addresses, credentials, or host inventory values in the repository.
 
-| Path | Purpose | Notes |
-| --- | --- | --- |
-| Personal laptop -> Tailscale -> OptiPlex | SSH and browser access | Preferred private management path |
-| Personal laptop -> SSH -> OptiPlex | Git, Ansible, Docker operations | Uses local inventory values that are not committed |
-| Browser -> Caddy hostnames | Dashboard access | Preferred over direct backend ports |
+## Decisions
 
-## Host Inventory
+Tailscale became the intended remote path between my laptop and the OptiPlex. Real inventory values stay in the untracked `ansible/inventory.ini` file; only the logical topology is documented here.
 
-| Host | Role | Address |
-| --- | --- | --- |
-| Dell OptiPlex | Ubuntu Docker host | Use local Tailscale or DNS value outside Git |
-| Personal laptop | Operator workstation | Use local Tailscale or DNS value outside Git |
+Caddy handles normal dashboard access on TCP `80`. Direct backend port mappings remain available for local testing and diagnosis, but they are not the preferred user path.
 
-## Reverse Proxy Hostnames
+## Build
 
-| Hostname | Routed Service | Backend Port | Purpose |
-| --- | --- | ---: | --- |
-| `grafana.ozul` | Grafana | 3000 | Metrics dashboards |
-| `kuma.ozul` | Uptime Kuma | 3001 | Service availability dashboard |
-| `prometheus.ozul` | Prometheus | 9090 | Metrics query and target status |
+### Access paths
 
-## Service Ports
+| Path | Purpose | Implementation |
+|---|---|---|
+| Laptop → Tailscale → OptiPlex | Private host reachability | Tailscale identity and device connectivity |
+| Laptop → SSH → OptiPlex | Git, Ansible, and Docker operations | Local inventory values and SSH credentials |
+| Browser → Caddy hostname | Dashboard access | TCP `80` through `tailscale0` |
 
-| Port | Service | Exposure Notes |
-| ---: | --- | --- |
-| 80 | Caddy reverse proxy | Preferred browser entry point over Tailscale |
-| 3000 | Grafana backend | May exist for local testing; prefer Caddy hostname |
-| 3001 | Uptime Kuma backend | May exist for local testing; prefer Caddy hostname |
-| 9090 | Prometheus backend | May exist for local testing; prefer Caddy hostname |
-| 9100 | Node Exporter metrics | Should not be broadly exposed |
+### Reverse-proxy routes
 
-## Notes
+| Hostname | Caddy upstream | Purpose |
+|---|---|---|
+| `grafana.ozul` | `grafana:3000` | Metrics dashboards |
+| `kuma.ozul` | `uptime-kuma:3001` | Availability monitoring |
+| `prometheus.ozul` | `prometheus:9090` | Metrics queries and target status |
 
-- The OptiPlex is the Ubuntu Docker host for the monitoring stack.
-- Tailscale is the intended remote access path for SSH and browser traffic.
-- Caddy provides friendly internal hostnames for dashboards.
-- Direct dashboard ports are useful for local testing, but normal access should go through Caddy.
-- Node Exporter exposes host metrics and should remain limited to trusted lab access.
+### Service ports
 
-## Diagram
+| Port | Service | How I use it |
+|---:|---|---|
+| `22` | OpenSSH | Host administration |
+| `80` | Caddy | Preferred dashboard entry point over Tailscale |
+| `3000` | Grafana | Direct local testing |
+| `3001` | Uptime Kuma | Direct local testing |
+| `9090` | Prometheus | Direct local testing and self-scraping |
+| `9100` | Node Exporter | Prometheus host-metrics target |
 
-```text
-Personal Laptop
-       |
-       | Tailscale / SSH / Browser
-       v
-Ubuntu OptiPlex
-       |
-       | Docker Compose
-       v
-Caddy :80
-       |
-       +--> grafana.ozul -> Grafana :3000
-       +--> kuma.ozul -> Uptime Kuma :3001
-       +--> prometheus.ozul -> Prometheus :9090
-
-Prometheus :9090
-       |
-       +--> Node Exporter :9100
+```mermaid
+flowchart TD
+    laptop["Personal laptop"] -->|"Tailscale"| optiplex["Ubuntu OptiPlex"]
+    laptop -->|"SSH"| optiplex
+    laptop -->|"Browser"| caddy["Caddy :80"]
+    caddy -->|"grafana.ozul"| grafana["Grafana :3000"]
+    caddy -->|"kuma.ozul"| kuma["Uptime Kuma :3001"]
+    caddy -->|"prometheus.ozul"| prometheus["Prometheus :9090"]
+    prometheus --> exporter["Node Exporter :9100"]
 ```
+
+## Validation
+
+On the host, Caddy routes are validated with explicit `Host` headers:
+
+```bash
+curl -I -H "Host: grafana.ozul" http://localhost
+curl -I -H "Host: kuma.ozul" http://localhost
+curl -H "Host: prometheus.ozul" http://localhost
+```
+
+Node Exporter is validated directly with:
+
+```bash
+curl http://localhost:9100/metrics | head
+```
+
+Finally, the Prometheus target view confirms the exporter path:
+
+![Prometheus target health](screenshots/prometheus-targets.jpg)
+
+## Lessons learned
+
+The hostname, listener, and upstream are three different checks. A `.ozul` name can resolve correctly while Caddy is stopped, and Caddy can respond while a backend container is unavailable. Passing the intended `Host` header during local tests lets me isolate Caddy routing without depending on laptop-side name resolution.
+
+The Compose port mappings currently publish every backend on the host. Tailscale and UFW narrow the intended access path, but binding the dashboards to a private interface or removing unnecessary host mappings would create a stronger boundary in a later hardening phase.

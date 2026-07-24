@@ -2,13 +2,13 @@
 
 ## Goal
 
-I wanted a public application path that was easy to trace while keeping the administrative path off the public SSH port.
+The networking goal was a public application path that remained easy to trace, paired with an administrative path that never opened the public SSH port.
 
 ## Decisions
 
-I used a `10.0.0.0/16` VPC and a `10.0.1.0/24` public subnet so I could add more subnet tiers later without redesigning the VPC. I allowed public TCP `80` for the test application and left TCP `22` closed.
+A `10.0.0.0/16` VPC and `10.0.1.0/24` public subnet leave room for additional subnet tiers without redesigning the VPC. Public access stops at TCP `80` for the test application; TCP `22` remains closed.
 
-I chose Systems Manager Session Manager for shell access. This removed SSH key distribution and source-IP allowlist maintenance from the first phase, while keeping access dependent on IAM permissions, the EC2 role, and the SSM agent.
+Systems Manager Session Manager provides shell access. That choice removed SSH key distribution and source-IP allowlist maintenance from the first phase while keeping access dependent on IAM permissions, the EC2 role, and the SSM agent.
 
 ## Build
 
@@ -33,7 +33,7 @@ For administration, I attached the SSM-managed instance permissions to the EC2 r
 
 ## Validation
 
-I checked the network path in layers:
+The network path was checked in layers:
 
 1. The route table was associated with the public subnet.
 2. The security group allowed the intended source and TCP port `80`.
@@ -52,6 +52,6 @@ The terminal evidence shows the healthy container, successful endpoint checks, a
 
 ## Lessons learned
 
-Security groups are stateful, so I did not need a separate inbound rule for response traffic. I also learned to separate routing from exposure: the internet gateway and public route made a path possible, but the security group and listening process determined whether the service was reachable.
+Because security groups are stateful, response traffic did not require a separate inbound rule. The build also clarified the difference between routing and exposure: the internet gateway and public route made a path possible, but the security group and listening process determined whether the service was reachable.
 
 Session Manager simplified key management, but it did not remove access controls. A working session still depended on the operator's IAM permissions, the EC2 instance role, and a functioning SSM agent path.

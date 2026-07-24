@@ -4,7 +4,7 @@
 
 I built this project to translate my Ubuntu, Docker, and monitoring homelab experience into a small AWS environment I could deploy, secure, monitor, and troubleshoot myself.
 
-I kept the first phase narrow: one manually deployed workload, one clear network path, keyless administrative access, private storage, host telemetry, and cost guardrails. My goal was to understand each moving part before reproducing the environment with Terraform.
+The first phase stayed narrow: one manually deployed workload, one clear network path, keyless administrative access, private storage, host telemetry, and cost guardrails. This scope let me understand each moving part before reproducing the environment with Terraform.
 
 ## Decisions
 
@@ -32,15 +32,15 @@ flowchart TD
     ec2 -->|"test artifacts"| s3["Private S3 bucket"]
 ```
 
-I created a VPC and public subnet, attached an internet gateway, and allowed only TCP port `80` for the public application path. I used an EC2 instance role and Systems Manager Session Manager for administration, so the host did not need stored AWS keys or an inbound SSH rule.
+The network started with a VPC and public subnet connected to an internet gateway, with only TCP port `80` allowed for the public application path. Administration runs through an EC2 instance role and Systems Manager Session Manager, so the host needs neither stored AWS keys nor an inbound SSH rule.
 
-On Ubuntu EC2, I deployed a small Flask service with Docker Compose and Gunicorn. The container listens on port `8000`, while Compose publishes the service on host port `80`. I configured a private S3 bucket with public access blocked, versioning enabled, and SSE-S3 encryption. I also installed the CloudWatch Agent, sent container logs to CloudWatch, collected host memory and disk metrics, and configured a `$10` monthly AWS budget.
+On Ubuntu EC2, a small Flask service runs through Docker Compose and Gunicorn. The container listens on port `8000`, while Compose publishes the service on host port `80`. A private S3 bucket adds storage with public access blocked, versioning enabled, and SSE-S3 encryption. For observability and cost control, I installed the CloudWatch Agent, sent container logs to CloudWatch, collected host memory and disk metrics, and configured a `$10` monthly AWS budget.
 
 The exact application and container configuration are available in [`app/`](app/).
 
 ## Validation
 
-I treated deployment and proof as separate steps. I validated that:
+Deployment and proof were separate steps. The validation covered:
 
 - the EC2 instance was running and passed both status checks;
 - the security group exposed HTTP on TCP `80` without exposing SSH;
@@ -58,9 +58,9 @@ The complete evidence set is in the [Phase 1 evidence gallery](docs/screenshots/
 
 ## Lessons learned
 
-The most useful failure happened when `curl http://localhost/health` returned nginx's `404 Not Found` page. The request had reached a web server, but it had not reached the Flask health endpoint. I separated the host listener, Docker port mapping, container state, and application route during diagnosis, then validated the final path with HTTP `200` responses.
+The most useful failure happened when `curl http://localhost/health` returned nginx's `404 Not Found` page. The request had reached a web server, but it had not reached the Flask health endpoint. Diagnosis separated the host listener, Docker port mapping, container state, and application route before final HTTP `200` responses validated the complete path.
 
-I also learned that an installed monitoring agent is not proof of working telemetry. I waited for recent CloudWatch datapoints before treating monitoring as complete.
+An installed monitoring agent also proved insufficient as evidence of working telemetry. Monitoring counted as complete only after recent datapoints appeared in CloudWatch.
 
 This phase deliberately stops short of Terraform, CI/CD, high availability, autoscaling, and recovery testing. Those are follow-on phases, not claims attached to this build.
 
