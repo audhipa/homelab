@@ -59,7 +59,7 @@ Recent memory and disk datapoints appeared with the Average statistic, a 5-minut
 
 The budget evidence shows the monthly limit and actual/forecast thresholds while excluding notification recipients.
 
-## Lessons learned
+## Lessons Learned
 
 Monitoring had two separate success conditions: the agent had to be running on the host, and CloudWatch had to show recent datapoints. Both had to be true before the setup counted as complete.
 
