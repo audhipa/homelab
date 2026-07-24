@@ -50,7 +50,7 @@ The `$10` monthly budget and actual/forecast alert thresholds were configured.
 
 [![Budget alerts](./06-budget-alerts.png)](./06-budget-alerts.png)
 
-## Lessons learned
+## Lessons Learned
 
 A screenshot is useful only when it proves a meaningful claim. Separate images for Docker versions, every endpoint, each CloudWatch log group, or every VPC component would repeat evidence without strengthening the project story, so they were left out.
 
