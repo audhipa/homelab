@@ -1,0 +1,23 @@
+services:
+  ops-demo:
+    build: .
+    container_name: ops-demo
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    environment:
+      APP_VERSION: "0.1.0"
+      ENVIRONMENT: "lab"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /aws/docker/cloud-ops/ops-demo
+        awslogs-stream: ops-demo
+        awslogs-create-group: "true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
