@@ -70,7 +70,7 @@ Finally, the Prometheus target view confirms the exporter path:
 
 ![Prometheus target health](screenshots/prometheus-targets.jpg)
 
-## Lessons learned
+## Lessons Learned
 
 The hostname, listener, and upstream are three different checks. A `.ozul` name can resolve correctly while Caddy is stopped, and Caddy can respond while a backend container is unavailable. Passing the intended `Host` header during local tests lets me isolate Caddy routing without depending on laptop-side name resolution.
 
