@@ -155,7 +155,7 @@ If `curl` reports error `23` after `head` prints the sample, I check whether the
 
 ![Prometheus target health](screenshots/prometheus-targets.jpg)
 
-## Lessons learned
+## Lessons Learned
 
 A wrapper script is useful only when I can still inspect the underlying command. Keeping both deployment paths made it easier to distinguish script failures from Compose failures.
 
