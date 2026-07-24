@@ -80,7 +80,7 @@ The captured Prometheus view reports the self-scrape endpoint as `prometheus:909
 
 ![Uptime Kuma monitoring](screenshots/uptime-kuma-dashboard.png)
 
-## Lessons learned
+## Lessons Learned
 
 The reverse proxy simplified normal access, but it did not remove the backend ports or container network. A complete request still depends on the laptop resolving the intended hostname, the Tailscale path, UFW, Caddy's `Host` match, Docker DNS, and the backend process.
 

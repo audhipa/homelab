@@ -50,7 +50,7 @@ The final result showed:
 
 ![Healthy container, HTTP endpoints, and CloudWatch Agent](screenshots/03-session-and-health.png)
 
-## Lessons learned
+## Lessons Learned
 
 My first `curl http://localhost/health` request returned nginx's `404 Not Found` page. That response proved only that port `80` reached nginx; it did not prove that Flask was healthy.
 

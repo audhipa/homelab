@@ -45,13 +45,13 @@ For the physical homelab, I captured Docker service state, Prometheus target hea
 
 For the AWS environment, I validated the EC2 status checks, security-group rules, Session Manager access, Docker health, application endpoints, CloudWatch datapoints, S3 controls, and budget alerts. The full proof set is in the [AWS Phase 1 evidence gallery](aws-cloud-ops/docs/screenshots/README.md).
 
-## Lessons learned
+## Lessons Learned
 
 The physical lab taught me how service discovery, host ports, reverse proxying, firewall rules, and metrics collection interact on one machine. The AWS build forced me to separate those same concerns across cloud networking, IAM, instance metadata, managed access, object storage, and telemetry services.
 
 Another lesson was the difference between an artifact and a validated capability. The homelab contains a backup script, a Terraform placeholder, and a workflow definition, but none supports a claim of tested recovery, Terraform-managed infrastructure, or active repository-level CI yet. Those capabilities become complete only after both the implementation path and evidence exist.
 
-## Detailed documentation
+## Detailed Documentation
 
 - [Homelab Infrastructure Platform](homelab-infra-platform/README.md)
 - [Homelab architecture](homelab-infra-platform/docs/architecture.md)

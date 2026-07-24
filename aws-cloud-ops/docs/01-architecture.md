@@ -49,7 +49,7 @@ The EC2 overview confirmed a running instance, two passing status checks, the ex
 
 End-to-end validation covered both the request path and control plane: public HTTP reached port `80`, Session Manager reached the host without SSH, the container served the Flask endpoints, CloudWatch received telemetry, and the S3 bucket remained private.
 
-## Lessons learned
+## Lessons Learned
 
 A route to an internet gateway does not expose a workload by itself. The request still has to pass the security group and reach a process listening on the mapped host port.
 
