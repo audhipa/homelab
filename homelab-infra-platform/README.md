@@ -97,7 +97,7 @@ The evidence set also includes:
 - [Grafana metrics dashboard](docs/screenshots/grafana-dashboard.png)
 - [Uptime Kuma service monitoring](docs/screenshots/uptime-kuma-dashboard.png)
 
-## Lessons learned
+## Lessons Learned
 
 Host networking and container networking are separate layers. Caddy needed the correct browser `Host` header, Docker service names for its upstreams, and network aliases for the internal `.ozul` names. Prometheus also needed its configuration mounted explicitly before Node Exporter appeared as a scrape target.
 
@@ -105,7 +105,7 @@ Several failures improved the operating model: Prometheus rejected a `HEAD` requ
 
 This project still has clear boundaries. The Grafana dashboard and Uptime Kuma monitors are stored in service volumes rather than provisioned from committed configuration. The backup script has not passed a restore test, and its volume-name assumptions still need to be reconciled with Docker Compose. The Terraform directory contains no managed resources. A validation workflow definition is present under this project, but it is not active GitHub Actions CI because workflows must live at the repository-root `.github/workflows/` path.
 
-## Detailed documentation
+## Detailed Documentation
 
 - [Architecture](docs/architecture.md)
 - [Network and service map](docs/network-map.md)
