@@ -12,14 +12,43 @@ I retained service names, states, ports, metric names, policy names, and timesta
 
 ## Evidence
 
-| Evidence | What I validated |
-|---|---|
-| [EC2 overview](01-ec2-overview.png) | The instance was running, passed both status checks, used the expected Availability Zone and instance type, had the security group and IAM role attached, and required IMDSv2. |
-| [Network controls](02-network-controls.png) | The security group allowed public HTTP on TCP `80` and had no inbound SSH rule. |
-| [Session and health](03-session-and-health.png) | The container was healthy, `/health` and `/version` returned HTTP `200`, and the CloudWatch Agent was running and configured. |
-| [S3 private controls](04-s3-private-controls.png) | All four Block Public Access settings were enabled, versioning was enabled, and default encryption used SSE-S3. |
-| [CloudWatch telemetry](05-cloudwatch-evidence.png) | Recent memory and disk datapoints reached CloudWatch with the Average statistic, 5-minute period, and 1-hour range. |
-| [Budget alerts](06-budget-alerts.png) | The `$10` monthly budget and actual/forecast alert thresholds were configured. |
+Each screenshot is embedded below and links to the full-resolution file.
+
+### 1. EC2 overview
+
+The instance was running, passed its status checks, used the expected Availability Zone and instance type, had the security group and IAM role attached, and required IMDSv2.
+
+[![EC2 overview](./01-ec2-overview.png)](./01-ec2-overview.png)
+
+### 2. Network controls
+
+The security group allowed public HTTP on TCP `80` and had no inbound SSH rule.
+
+[![Network controls](./02-network-controls.png)](./02-network-controls.png)
+
+### 3. Session and health
+
+The container was healthy, `/health` and `/version` returned HTTP `200`, and the CloudWatch Agent was running and configured.
+
+[![Session and health](./03-session-and-health.png)](./03-session-and-health.png)
+
+### 4. S3 private controls
+
+All four Block Public Access settings were enabled, versioning was enabled, and default encryption used SSE-S3.
+
+[![S3 private controls](./04-s3-private-controls.png)](./04-s3-private-controls.png)
+
+### 5. CloudWatch telemetry
+
+Recent memory and disk datapoints reached CloudWatch with the Average statistic, 5-minute period, and 1-hour range.
+
+[![CloudWatch telemetry](./05-cloudwatch-evidence.png)](./05-cloudwatch-evidence.png)
+
+### 6. Budget alerts
+
+The `$10` monthly budget and actual/forecast alert thresholds were configured.
+
+[![Budget alerts](./06-budget-alerts.png)](./06-budget-alerts.png)
 
 ## Lessons learned
 

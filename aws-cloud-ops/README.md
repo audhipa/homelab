@@ -52,7 +52,7 @@ I treated deployment and proof as separate steps. I validated that:
 - the S3 privacy, versioning, and encryption controls were enabled;
 - the budget and four alert thresholds were active.
 
-![Healthy Docker service and CloudWatch Agent](docs/screenshots/03-session-and-health.png)
+[![Healthy Docker service and CloudWatch Agent](./docs/screenshots/03-session-and-health.png)](./docs/screenshots/03-session-and-health.png)
 
 The complete evidence set is in the [Phase 1 evidence gallery](docs/screenshots/README.md).
 
