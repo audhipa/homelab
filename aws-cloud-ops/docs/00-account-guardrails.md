@@ -44,7 +44,7 @@ The final budget evidence shows the `$10` monthly limit and all four alert thres
 
 ![AWS budget and alert thresholds](screenshots/06-budget-alerts.png)
 
-## Lessons learned
+## Lessons Learned
 
 Administrator permissions alone did not activate the Billing console for IAM identities. The account-level root setting was a separate dependency.
 
