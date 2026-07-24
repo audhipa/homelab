@@ -56,7 +56,7 @@ Deployment and proof were separate steps. The validation covered:
 
 The complete evidence set is in the [Phase 1 evidence gallery](docs/screenshots/README.md).
 
-## Lessons learned
+## Lessons Learned
 
 The most useful failure happened when `curl http://localhost/health` returned nginx's `404 Not Found` page. The request had reached a web server, but it had not reached the Flask health endpoint. Diagnosis separated the host listener, Docker port mapping, container state, and application route before final HTTP `200` responses validated the complete path.
 
@@ -64,7 +64,7 @@ An installed monitoring agent also proved insufficient as evidence of working te
 
 This phase deliberately stops short of Terraform, CI/CD, high availability, autoscaling, and recovery testing. Those are follow-on phases, not claims attached to this build.
 
-## Detailed documentation
+## Detailed Documentation
 
 - [Account and cost guardrails](docs/00-account-guardrails.md)
 - [Architecture](docs/01-architecture.md)
